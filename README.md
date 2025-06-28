@@ -110,8 +110,9 @@ KReplica recursively applies
 
 Types exempt from `Contextual` are whitelisted in `codegen/src/commonMain/kotlin/io/availe/models/Constants.kt`.
 
-For manual control, use the annotation `@UseSerializers`. It works identically to `@Serializable(with = ...)`, but is
-needed since `@Serializable` isn’t used directly.
+For manual control, use the `@UseSerializer(with = ...)` annotation. It works identically as `@Serializable(with = ...)`
+and emits
+the latter annotation in the generated code.
 
 If you wish to force a property to use `Contextual`, you may use the annotation `@ForceContextual`.
 
