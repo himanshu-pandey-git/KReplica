@@ -36,7 +36,7 @@ This example covers how to use the `Replicate` and `ReplicateProperty` annotatio
 )
 private interface UserAccount {
     // This property inherits all of @Replicate's arguments
-    val email_address: String
+    val emailAddress: String
 
     // This property is only included in the BASE variant
     @ReplicateProperty(include = [Variant.BASE])
@@ -44,11 +44,11 @@ private interface UserAccount {
 
     // This property is excluded from the CREATE variant
     @ReplicateProperty(exclude = [Variant.CREATE])
-    val ban_reason: Option<String>
+    val banReason: Option<String>
 
     // We opt out of nominalTyping for this property
     @ReplicateProperty(nominalTyping = NominalTyping.DISABLED)
-    val user_description: String?
+    val userDescription: String?
 }
 ```
 
