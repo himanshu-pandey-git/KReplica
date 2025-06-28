@@ -50,9 +50,18 @@ fun buildDataTransferObjectClass(
     }
 
     val constructorBuilder = FunSpec.constructorBuilder()
+    val isSerializable = model.isSerializable(variant)
     properties.forEach { property ->
         val typeName =
-            resolveTypeNameForProperty(property, variant, model, valueClassNames, existingValueClasses, modelsByName)
+            resolveTypeNameForProperty(
+                property,
+                variant,
+                model,
+                valueClassNames,
+                existingValueClasses,
+                modelsByName,
+                isContainerSerializable = isSerializable
+            )
 
         val paramBuilder = ParameterSpec.builder(property.name, typeName)
 

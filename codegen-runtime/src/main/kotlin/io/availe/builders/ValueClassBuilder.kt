@@ -11,7 +11,7 @@ fun buildValueClass(
     property: RegularProperty,
     isSerializable: Boolean
 ): TypeSpec {
-    val underlyingTypeName = property.typeInfo.toTypeName()
+    val underlyingTypeName = property.typeInfo.toTypeName(isContainerSerializable = isSerializable)
     val constructorParameterBuilder = ParameterSpec.builder(VALUE_PROPERTY_NAME, underlyingTypeName)
 
     property.annotations
