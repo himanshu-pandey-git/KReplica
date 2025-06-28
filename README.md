@@ -1,224 +1,143 @@
 # KReplica
 
-KReplica is a nominally typed DTO generator for KMM and Kotlin JVM. KReplica generates replications, a base data class, a create data class, and a patch data class.
+KReplica is a DTO generator for KMM and Kotlin JVM.
+
+### Features:
+
+* **Variant generation:** From a single interface, specify up to three variants to generate:
+    * `BASE`: For read-only data representation
+    * `CREATE`: For object creation requests
+    * `PATCH`: For update requests, wraps properties in a `Patchable` type.
+* **Granular control:** Enable or disable specific features or variants at both the model and property levels.
+* **Nominal Typing:** Automatically wrap primitive types in value classes for added type safety and clarity.
+* **Schema Versioning:** Defines a sealed interface for each schema version, enabling exhaustive when expressions.
+* **Plain Kotlin:** Emits plain Kotlin source files to your build directory, free of framework-specific code or runtime
+  dependencies.
 
 ## 🚀 Quick Start
 
-Add KSP and KReplica plugins to your Gradle module (`build.gradle.kts`):
+Add the KSP and KReplica plugins to your module's `build.gradle.kts`:
 
 ```kotlin
 plugins {
-  id("com.google.devtools.ksp") version "2.1.20-2.0.1"
-  id("io.availe.kreplica") version "1.0.0"
+    id("com.google.devtools.ksp") version "2.1.21-2.0.1" // Use a KSP version that matches your Kotlin version
+    id("io.availe.kreplica") version "1.0.0"
 }
 ```
 
-KReplica also has an optional Gradle Kotlin DSL. For example:
+## Example (non-versioned)
 
-```Kotlin
-kreplica {
-    fromContext(project(projects.shared.path))
-    generatePatchable = true
-    serializePatchable = true
-}
-```
-
-If no flags are provided, by default generatePatchable is true, serializePatchable is false, and fromContext is null.
-
-fromContext allows KReplica to generate code defined in other modules, useful in some contexts.
-
-
-## ✨ Example (non-versioned)
-There are four replication levels:
-
-- Replication.NONE (generates base data class)
-- Replication.CREATE (generates base and create data classes)
-- Replication.PATCH (generates base and patch data classes)
-- Replication.BOTH (generates base, create, and patch data classes)
-
-@ModelGen has the following parameters: replication (required), annotations (optional), optInMarkers (optional).
-
-Note while it might feel different writing ```Serializable::class``` as opposed to ```@Serializable```, you still benefit from IDE autocomplete, at least in IntelliJ.
+This example covers how to use the `Replicate` and `ReplicateProperty` annotations.
 
 ```kotlin
-@ModelGen(
-    replication = Replication.BOTH,
-    annotations = [Serializable::class],
-    optInMarkers = [ExperimentalUuidApi::class]
+@Replicate(
+    variants = [Variant.BASE, Variant.CREATE, Variant.PATCH], // required argument
+    nominalTyping = NominalTyping.ENABLED // disabled by default
 )
 private interface UserAccount {
-    @FieldGen(Replication.NONE)
-    @Contextual
-    val allIds: List<Uuid>
-    val name: String
+    // This property inherits all of @Replicate's arguments
+    val email_address: String
+
+    // This property is only included in the BASE variant
+    @ReplicateProperty(include = [Variant.BASE])
+    val id: UUID
+
+    // This property is excluded from the CREATE variant
+    @ReplicateProperty(exclude = [Variant.CREATE])
+    val ban_reason: Option<String>
+
+    // We opt out of nominalTyping for this property
+    @ReplicateProperty(nominalTyping = NominalTyping.DISABLED)
+    val user_description: String?
 }
 ```
 
-Here is the generated code. Notice how userId is only present in the base data class, but not in the Create Request or Patch Request.
+## Example (versioned)
 
-This is useful if say you want userId to be created by the database. Here you cannot accidentally assign a userId to a Create Request.
-
-```kotlin
-@file:OptIn(ExperimentalUuidApi::class)
-
-@Serializable
-public data class UserAccountData(
-  public val id: UserAccountId,
-  public val name: UserAccountName,
-)
-
-@Serializable
-public data class UserAccountCreateRequest(
-  public val name: UserAccountName,
-)
-
-@Serializable
-public data class UserAccountPatchRequest(
-  public val name: Patchable<UserAccountName> = Patchable.Unchanged,
-)
-
-// Value classes
-@JvmInline
-@Serializable
-public value class UserAccountId(
-  @Contextual
-  public val `value`: Uuid,
-)
-
-@JvmInline
-@Serializable
-public value class UserAccountName(
-  public val `value`: String,
-)
-
-```
-
-Tangential, but here's what a patchable file looks like:
+To version a `Replicate` declaration, create a base interface (e.g. `UserAccount`) and extend it with V\<number\>
+interfaces (e.g. `V1`, `V2`) to track model changes.
 
 ```kotlin
-@Serializable
-public sealed class Patchable<out T> {
-  @Serializable
-  public object Unchanged : Patchable<Nothing>()
+private interface UserAccount
 
-  @Serializable
-  public data class Set<T>(
-    public val `value`: T,
-  ) : Patchable<T>()
+@Replicate(variants = [Variant.BASE])
+private interface V1 : UserAccount {
+    val id: Int
 }
 
-```
-
-## ✨ Example (versioned)
-
-KReplica can also create versioned seal classes. To do so, simply declare a @ModelGen that implement an interface. For example:
-
-```kotlin
-private interface User
-
-@ModelGen(replication = Replication.NONE,)
-private interface V1: User {
-    val name: String
-}
-
-@ModelGen(replication = Replication.NONE,)
-private interface V2: User {
-    @Contextual
+@Replicate(variants = [Variant.BASE, Variant.PATCH])
+private interface V2 : UserAccount {
     val id: Int
     val name: String
 }
 ```
 
-Here is the generated code:
+If you wish to not follow the V\<number\> naming convention, you must use the `SchemaVersion` annotation to manually
+specify a version number.
+
 ```kotlin
-public sealed class UserSchema {
-    // Version 1
-  public sealed class V1 : UserSchema() {
-    public data class Data(
-      public val name: UserName,
-      public val schemaVersion: UserSchemaVersion = UserSchemaVersion(1),
-    ) : V1()
-  }
+private interface UserAccount
 
-    // Version 2
-  public sealed class V2 : UserSchema() {
-    public data class Data(
-      public val id: UserId,
-      public val name: UserName,
-      public val schemaVersion: UserSchemaVersion = UserSchemaVersion(2),
-    ) : V2()
-  }
+@Replicate(variants = [Variant.BASE, Variant.PATCH])
+@SchemaVersion(1)
+private interface NewAccount : UserAccount {
+    val id: Int
+    val name: String
 }
-
-// Shared value classes
-@JvmInline
-public value class UserId(
-  @Contextual
-  public val `value`: Int,
-)
-
-@JvmInline
-public value class UserName(
-  public val `value`: String,
-)
-
-@JvmInline
-public value class UserSchemaVersion(
-  public val `value`: Int,
-)
-
 ```
 
-## FAQ
-### What are all the annotations in KReplica?
-- @ModelGen, @FieldGen (covered previously)
-- @Hide (prevents a @ModelGen from being generated)
-- @SchemaVersion (is required for *versioned* @ModelGens if you do not follow the V1, V2, V... naming convention)
-### Did you account for edge cases?
-- If a field's name is reused with a different type across a *versioned* schema (e.g., String vs Int), a distinct value class is generated per field version.
-- If a field is already a value class, then its existent value class will be used instead of generating a new one.
-- All KReplica build files are cleaned at the start of each run, preventing stale data.
-- Nested models and generic types are supported.
-### Can a field have a broader replication than its parent @ModelGen?
-No. The replication of all children must be a subset of the parent (⊆), including for nested models. Otherwise, KReplica will error and log the offending fields.
-This rule ensures fail-fast feedback. If you restrict a parent’s replication but forget to update a child field, you’ll get an immediate build-time error.
-### If a @ModelGen has another @ModelGen as a field, does the order of compilation matter?
-No. KReplica generates a models.json file as an intermediary representation, which is then checked for validity. While the IDE might show an error that said referenced model does not exist yet, you can just build, and KReplica will handle dependencies automatically.
-### Why do all the examples use the private keyword (private interface)?
-The ```private``` keyword is not required for KReplica to function. However, the KReplica interfaces are useless outside of KReplica, so I prefer to private them so they don't contaminate the name space.
-### Can nested data classes have context-specific nested field properties?
-If a ModelGen references a *versioned* @ModelGen, you can write this:
+Note all versioned declarations automatically inject a `schema_version` property into the generated DTOs.
+
+## Example (serializable)
+
+Interfaces cannot directly implement some annotations, including `Serializable`. Instead, you can use Note
+`ApplyAnnotations`.
+
 ```kotlin
-@ModelGen(Replication.BOTH)
+@Replicate(variants = [Variant.BASE, Variant.PATCH])
+@ApplyAnnotations(annotations = [Serializable::class])
 private interface UserAccount {
-    val conversation: ConversationSchema.V1
-}
-```
-What this does is that it ensures the following:
-- User Account base class has a Conversation Version 1 base class
-- User Account patch class has a Conversation Version 1 patch class
-- User Account create class has a Conversation Version 1 create class
-
-If for whatever reason you do NOT want context-specific, you can do this.
-```kotlin
-@ModelGen(Replication.BOTH)
-interface UserAccount {
-    val conversation: ConversationSchema.V1.Data
+    val id: Int
 }
 ```
 
-This ensures all UserAccount variants contain a Conversation Version 1 base class.
+Note that `ApplyAnnotations` can also take include/exclude arguments, if you want an annotation to only be applied to a
+specific variant. Additionally, `ApplyAnnotations` is repeatable and takes a list of annotations.
 
-Note that if you want to use the context-specific version, and you're referencing a @ModelGen defined in another Gradle module, you need to use ```fromContext()``` (see quick start section). 
-### How do I use annotations with arguments?
-The current annotations/opt-in-marker system was designed since some annotations cannot be used on interfaces. For example, this is NOT valid:
+The drawback of `ApplyAnnotations` is that the IDE no longer warns when `Contextual` is needed. To address this,
+KReplica recursively applies
+`Contextual` in generated code, so it works regardless of generic nesting.
+
+Types exempt from `Contextual` are whitelisted in `codegen/src/commonMain/kotlin/io/availe/models/Constants.kt`.
+
+For manual control, use the annotation `@UseSerializers`. It works identically to `@Serializable(with = ...)`, but is
+needed since `@Serializable` isn’t used directly.
+
+If you wish to force a property to use `Contextual`, you may use the annotation `@ForceContextual`.
+
+## Directly applying annotations
+
+If the annotation can be applied on interfaces, you can directly use it without the need for `ApplyAnnotations`. For
+example:
+
 ```kotlin
-@Serializable
-private interface Car
+@Replicate(variants = [Variant.BASE, Variant.PATCH])
+@Deprecated("Use NewUserAccount instead")
+private interface UserAccount {
+    @Deprecated("Use newId instead")
+    val id: Int
+}
 ```
 
-However, some annotations can be utilized on interfaces.
-### Is KReplica actively maintained?
-Yes. I use KReplica in my own internal projects, so it receives updates and bug fixes as needed.
+## The hide annotation
 
-The codebase was originally part of a larger project before being separated into its own repository, so it has been developed and refined based on my own use cases. Broader feedback and contributions are always welcome!
+The `@Hide` annotation stops a `Replicate` declaration from being generated. It's mainly for temporarily testing how
+code removal affects the system—but use it as you see fit.
+
+```kotlin
+@Replicate(variants = [Variant.BASE])
+@Hide
+private interface UserAccount {
+    val id: Int
+}
+```

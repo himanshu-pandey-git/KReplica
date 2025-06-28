@@ -3,7 +3,6 @@ package io.availe.ksp
 import org.gradle.api.Project
 import org.gradle.kotlin.dsl.dependencies
 import org.jetbrains.kotlin.gradle.dsl.KotlinMultiplatformExtension
-import org.jetbrains.kotlin.gradle.internal.KaptTask
 import org.jetbrains.kotlin.gradle.plugin.KotlinTarget
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompilationTask
 
@@ -28,10 +27,11 @@ fun KotlinMultiplatformExtension.kspDependenciesForAllTargets(block: KspDependen
 
 fun KotlinMultiplatformExtension.commonMainKspDependencies(
     project: Project,
+    projectVersion: String,
     block: KspDependencies.() -> Unit
 ) {
     project.dependencies {
-        add("kspCommonMainMetadata", "io.availe:model-ksp-processor:1.0.0")
+        add("kspCommonMainMetadata", "io.availe:model-ksp-processor:$projectVersion")
     }
 
     sourceSets.named("commonMain").configure {
