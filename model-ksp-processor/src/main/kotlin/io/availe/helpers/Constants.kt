@@ -4,7 +4,6 @@ import io.availe.*
 
 val MODEL_ANNOTATION_NAME: String = Replicate::class.qualifiedName!!
 const val APPLY_ANNOTATIONS_ANNOTATION_NAME: String = "io.availe.ApplyAnnotations"
-const val EXTEND_VARIANT_ANNOTATION_NAME: String = "io.availe.ExtendVariant"
 val FIELD_ANNOTATION_NAME: String = ReplicateProperty::class.qualifiedName!!
 val SCHEMA_VERSION_ANNOTATION_NAME: String = SchemaVersion::class.qualifiedName!!
 val HIDE_ANNOTATION_NAME: String = Hide::class.qualifiedName!!

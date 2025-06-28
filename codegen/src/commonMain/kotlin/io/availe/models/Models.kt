@@ -3,12 +3,6 @@ package io.availe.models
 import kotlinx.serialization.Serializable
 
 @Serializable
-data class ExtendConfigModel(
-    val superclassFqName: String,
-    val variant: Variant
-)
-
-@Serializable
 data class AnnotationConfigModel(
     val annotation: AnnotationModel,
     val variants: Set<Variant>
@@ -24,8 +18,7 @@ data class Model(
     val optInMarkers: List<String>? = null,
     val isVersionOf: String? = null,
     val schemaVersion: Int? = null,
-    val nominalTyping: String? = null,
-    val extendConfigs: List<ExtendConfigModel> = emptyList()
+    val nominalTyping: String? = null
 ) {
     init {
         require(properties.isNotEmpty()) {

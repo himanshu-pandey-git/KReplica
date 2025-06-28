@@ -32,16 +32,10 @@ fun buildDataTransferObjectClass(
 ): TypeSpec {
     val generatedClassName = if (model.isVersionOf != null) variant.suffix else model.name + variant.suffix
 
-    val extendConfig = model.extendConfigs.find { it.variant == variant }
-
     val typeSpecBuilder = TypeSpec.classBuilder(generatedClassName).addModifiers(KModifier.DATA)
 
     model.annotationConfigs.filter { variant in it.variants }.forEach { config ->
         typeSpecBuilder.addAnnotation(buildAnnotationSpec(config.annotation))
-    }
-
-    extendConfig?.let {
-        typeSpecBuilder.superclass(it.superclassFqName.asClassName())
     }
 
     if (variant == Variant.BASE && model.isVersionOf != null) {

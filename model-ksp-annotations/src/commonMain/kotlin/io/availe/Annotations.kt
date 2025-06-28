@@ -23,13 +23,6 @@ annotation class ApplyAnnotations(
     val exclude: Array<Variant> = []
 )
 
-@Repeatable
-@Target(AnnotationTarget.CLASS)
-annotation class ExtendVariant(
-    val variant: Variant,
-    val with: KClass<*>
-)
-
 @Target(AnnotationTarget.PROPERTY)
 annotation class ReplicateProperty(
     val exclude: Array<Variant> = [],
