@@ -12,6 +12,10 @@ data class AnnotationModel(
 sealed class AnnotationArgument {
     @Serializable
     data class StringValue(val value: String) : AnnotationArgument()
+
     @Serializable
     data class LiteralValue(val value: String) : AnnotationArgument()
+
+    @Serializable
+    data class AnnotationValue(val value: AnnotationModel) : AnnotationArgument()
 }

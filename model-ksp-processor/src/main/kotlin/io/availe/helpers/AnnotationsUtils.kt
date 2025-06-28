@@ -71,34 +71,49 @@ internal fun determineVersioningInfo(
     return VersioningInfo(baseInterface.simpleName.asString(), version)
 }
 
+private fun ksAnnotationToModel(
+    annotation: KSAnnotation,
+    frameworkDeclarations: Set<KSClassDeclaration>
+): AnnotationModel? {
+    val declaration = annotation.annotationType.resolve().declaration as? KSClassDeclaration ?: return null
+    if (declaration in frameworkDeclarations) return null
+
+    val arguments = annotation.arguments.mapNotNull { argument ->
+        val key = argument.name?.asString() ?: "value"
+        val rawValue = argument.value ?: return@mapNotNull null
+
+        val modelArgument: AnnotationArgument? = when (rawValue) {
+            is String -> AnnotationArgument.StringValue(rawValue)
+            is KSType -> AnnotationArgument.LiteralValue("${rawValue.declaration.qualifiedName!!.asString()}::class")
+            is KSAnnotation -> ksAnnotationToModel(
+                rawValue,
+                frameworkDeclarations
+            )?.let { AnnotationArgument.AnnotationValue(it) }
+
+            is List<*> -> {
+                val listContents = rawValue.joinToString(", ") { item ->
+                    when (item) {
+                        is KSType -> "${item.declaration.qualifiedName!!.asString()}::class"
+                        else -> item.toString()
+                    }
+                }
+                AnnotationArgument.LiteralValue("[$listContents]")
+            }
+
+            else -> AnnotationArgument.LiteralValue(rawValue.toString())
+        }
+
+        modelArgument?.let { key to it }
+    }.toMap()
+
+    return AnnotationModel(declaration.qualifiedName!!.asString(), arguments)
+}
+
+
 fun Sequence<KSAnnotation>.toAnnotationModels(
     frameworkDeclarations: Set<KSClassDeclaration>
 ): List<AnnotationModel>? =
-    mapNotNull { annotation ->
-        val declaration = annotation.annotationType.resolve().declaration as? KSClassDeclaration
-            ?: return@mapNotNull null
-        if (declaration in frameworkDeclarations) return@mapNotNull null
-        val arguments = annotation.arguments.associate { argument ->
-            val key = argument.name?.asString() ?: "value"
-            val rawValue = argument.value
-            key to when (rawValue) {
-                is String -> AnnotationArgument.StringValue(rawValue)
-                is KSType -> AnnotationArgument.LiteralValue("${rawValue.declaration.qualifiedName!!.asString()}::class")
-                is List<*> -> {
-                    val listContents = rawValue.joinToString(", ") { item ->
-                        when (item) {
-                            is KSType -> "${item.declaration.qualifiedName!!.asString()}::class"
-                            else -> item.toString()
-                        }
-                    }
-                    AnnotationArgument.LiteralValue("[$listContents]")
-                }
-
-                else -> AnnotationArgument.LiteralValue(rawValue.toString())
-            }
-        }
-        AnnotationModel(declaration.qualifiedName!!.asString(), arguments)
-    }
+    mapNotNull { ksAnnotationToModel(it, frameworkDeclarations) }
         .toList()
         .takeIf { it.isNotEmpty() }
 

@@ -115,6 +115,20 @@ needed since `@Serializable` isn’t used directly.
 
 If you wish to force a property to use `Contextual`, you may use the annotation `@ForceContextual`.
 
+## Directly applying annotations
+
+If the annotation can be applied on interfaces, you can directly use it without the need for `ApplyAnnotations`. For
+example:
+
+```kotlin
+@Replicate(variants = [Variant.BASE, Variant.PATCH])
+@Deprecated("Use NewUserAccount instead")
+private interface UserAccount {
+    @Deprecated("Use newId instead")
+    val id: Int
+}
+```
+
 ## The hide annotation
 
 The `@Hide` annotation stops a `Replicate` declaration from being generated. It's mainly for temporarily testing how

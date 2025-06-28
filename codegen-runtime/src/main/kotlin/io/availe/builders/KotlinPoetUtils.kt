@@ -19,6 +19,10 @@ internal fun buildAnnotationSpec(annotationModel: AnnotationModel): AnnotationSp
         when (argVal) {
             is AnnotationArgument.StringValue -> builder.addMember("%L = %S", argName, argVal.value)
             is AnnotationArgument.LiteralValue -> builder.addMember("%L = %L", argName, argVal.value)
+            is AnnotationArgument.AnnotationValue -> {
+                val nestedAnnotationSpec = buildAnnotationSpec(argVal.value)
+                builder.addMember("%L = %L", argName, nestedAnnotationSpec)
+            }
         }
     }
     return builder.build()
