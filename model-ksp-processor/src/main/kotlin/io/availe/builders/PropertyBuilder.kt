@@ -26,13 +26,15 @@ internal fun processProperty(
     environment: SymbolProcessorEnvironment
 ): Property {
     if (propertyDeclaration.isMutable) {
-        environment.logger.warn(
+        val propertyName = propertyDeclaration.simpleName.asString()
+        val interfaceName = (propertyDeclaration.parent as? KSClassDeclaration)?.simpleName?.asString() ?: "Unknown"
+        fail(
+            environment,
             """
-            KReplica Warning: Property '${propertyDeclaration.simpleName.asString()}' in interface '${(propertyDeclaration.parent as? KSClassDeclaration)?.simpleName?.asString()}' is declared as 'var'.
-            KReplica generates property mutability based on the variant's configuration (e.g., @ExtendConfig(asDataClass = false)), not the source interface.
-            The 'var' keyword will be ignored to maintain a clean separation of concerns.
-            """.trimIndent(),
-            propertyDeclaration
+            KReplica Validation Error: Property '$propertyName' in interface '$interfaceName' is declared as 'var'.
+            Source model interfaces for KReplica must use immutable properties ('val').
+            Please change '$propertyName' from 'var' to 'val'.
+            """.trimIndent()
         )
     }
 
