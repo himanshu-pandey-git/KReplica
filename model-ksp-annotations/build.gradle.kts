@@ -28,7 +28,7 @@ kotlin {
     sourceSets {
         val commonMain by getting {
             dependencies {
-                implementation(projects.codegen)
+                implementation(projects.codegenModels)
             }
         }
 

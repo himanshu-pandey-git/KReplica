@@ -32,7 +32,7 @@ dependencyResolutionManagement {
     }
 }
 
-include(":codegen")
+include(":codegen-models")
 include(":codegen-runtime")
 include(":model-ksp-processor")
 include(":model-ksp-annotations")

@@ -18,7 +18,7 @@ gradlePlugin {
 }
 
 dependencies {
-    implementation(projects.codegen)
+    implementation(projects.codegenModels)
     implementation(projects.modelKspProcessor)
     implementation(projects.codegenRuntime)
     implementation(projects.modelKspAnnotations)
