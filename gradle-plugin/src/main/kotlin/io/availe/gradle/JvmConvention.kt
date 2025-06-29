@@ -10,7 +10,7 @@ fun applyJvmConvention(project: Project, extension: KReplicaExtension, projectVe
     project.dependencies.apply {
         project.logger.info("--- KREPLICA-PLUGIN: Adding KReplica dependencies for JVM project ${project.path} ---")
         add("implementation", "io.availe:model-ksp-annotations:$projectVersion")
-        add("implementation", "io.availe:codegen:$projectVersion")
+        add("implementation", "io.availe:codegen-models:$projectVersion")
         add("ksp", "io.availe:model-ksp-processor:$projectVersion")
     }
 

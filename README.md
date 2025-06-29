@@ -111,7 +111,7 @@ this,
 KReplica recursively applies
 `Contextual` in generated code, so it works regardless of generic nesting.
 
-Types exempt from `Contextual` are whitelisted in `codegen/src/commonMain/kotlin/io/availe/models/Constants.kt`.
+Types exempt from `Contextual` are whitelisted in `codegen-models/src/commonMain/kotlin/io/availe/models/Constants.kt`.
 
 For manual control, use the `@Replicate.WithSerializer(with = ...)` annotation. It works identically as
 `@Serializable(with = ...)`

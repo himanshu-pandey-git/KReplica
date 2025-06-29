@@ -1,7 +1,5 @@
 package io.availe.models
 
-const val SERIALIZABLE_ANNOTATION_FQN: String = "kotlinx.serialization.Serializable"
-
 val INTRINSIC_SERIALIZABLES: Set<String> = setOf(
     "kotlin.String",
     "kotlin.Char",

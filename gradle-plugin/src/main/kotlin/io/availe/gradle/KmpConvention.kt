@@ -11,7 +11,7 @@ fun applyKmpConvention(project: Project, extension: KReplicaExtension, projectVe
     kmpExt.sourceSets.getByName("commonMain").dependencies {
         project.logger.info("--- KREPLICA-PLUGIN: Adding KReplica dependencies for KMP commonMain in ${project.path} ---")
         implementation("io.availe:model-ksp-annotations:$projectVersion")
-        implementation("io.availe:codegen:$projectVersion")
+        implementation("io.availe:codegen-models:$projectVersion")
     }
 
     project.dependencies.apply {

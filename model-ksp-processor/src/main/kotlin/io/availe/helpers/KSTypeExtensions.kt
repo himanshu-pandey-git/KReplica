@@ -4,7 +4,6 @@ import com.google.devtools.ksp.processing.Resolver
 import com.google.devtools.ksp.symbol.KSClassDeclaration
 import com.google.devtools.ksp.symbol.KSType
 import io.availe.models.INTRINSIC_SERIALIZABLES
-import io.availe.models.SERIALIZABLE_ANNOTATION_FQN
 
 private val serializabilityCache = mutableMapOf<String, Boolean>()
 
