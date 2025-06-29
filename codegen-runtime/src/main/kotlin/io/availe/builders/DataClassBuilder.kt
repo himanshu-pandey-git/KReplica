@@ -30,7 +30,7 @@ fun buildDataTransferObjectClass(
     modelsByName: Map<String, Model>,
     coreInterfaceSpec: TypeSpec?
 ): TypeSpec {
-    val generatedClassName = if (model.isVersionOf != null) variant.suffix else model.name + variant.suffix
+    val generatedClassName = variant.suffix
 
     val typeSpecBuilder = TypeSpec.classBuilder(generatedClassName).addModifiers(KModifier.DATA)
 
@@ -38,9 +38,14 @@ fun buildDataTransferObjectClass(
         typeSpecBuilder.addAnnotation(buildAnnotationSpec(config.annotation))
     }
 
-    if (variant == Variant.BASE && model.isVersionOf != null) {
-        val schemaName = model.isVersionOf + "Schema"
-        typeSpecBuilder.addSuperinterface(ClassName(model.packageName, schemaName, model.name))
+    if (model.isVersionOf != null) {
+        val schemaName = model.isVersionOf!! + "Schema"
+
+        val versionInterface = ClassName(model.packageName, schemaName, model.name)
+        typeSpecBuilder.addSuperinterface(versionInterface)
+
+        val variantKindInterface = ClassName(model.packageName, schemaName, "${variant.suffix}Variant")
+        typeSpecBuilder.addSuperinterface(variantKindInterface)
     }
 
     val constructorBuilder = FunSpec.constructorBuilder()
@@ -79,7 +84,15 @@ fun buildDataTransferObjectClass(
         }
 
         if (property.name == SCHEMA_VERSION_PROPERTY_NAME && variant != Variant.PATCH) {
-            paramBuilder.defaultValue("%L", model.schemaVersion)
+            val isWrapped = (property.nominalTyping == "ENABLED" &&
+                    !propertyShouldSkipWrapping(property, existingValueClasses) &&
+                    property is RegularProperty)
+
+            if (isWrapped) {
+                paramBuilder.defaultValue("%T(%L)", typeName, model.schemaVersion)
+            } else {
+                paramBuilder.defaultValue("%L", model.schemaVersion)
+            }
         }
 
         if (variant == Variant.PATCH) {

@@ -45,8 +45,8 @@ private fun generateSchemaFile(
     val isGloballySerializable =
         representativeModel.annotationConfigs.any { it.annotation.qualifiedName == SERIALIZABLE_QUALIFIED_NAME }
 
-    val topLevelClassBuilder = if (isVersioned) {
-        TypeSpec.interfaceBuilder(schemaFileName)
+    if (isVersioned) {
+        val topLevelClassBuilder = TypeSpec.interfaceBuilder(schemaFileName)
             .addModifiers(KModifier.SEALED)
             .apply {
                 if (isGloballySerializable) {
@@ -54,11 +54,20 @@ private fun generateSchemaFile(
                 }
             }
             .addKdoc(TOP_LEVEL_CLASS_KDOC, baseName)
-    } else null
-    versions.forEach { version ->
-        val dtos =
-            generateDataTransferObjects(version, valueClassNames, existingValueClasses, modelsByName)
-        if (isVersioned) {
+
+        val allVariants = versions.flatMap { it.variants }.toSet()
+        allVariants.forEach { variant ->
+            val interfaceName = "${variant.suffix}Variant"
+            val variantInterfaceSpec = TypeSpec.interfaceBuilder(interfaceName)
+                .addModifiers(KModifier.PUBLIC, KModifier.SEALED)
+                .addSuperinterface(ClassName(representativeModel.packageName, schemaFileName))
+                .build()
+            topLevelClassBuilder.addType(variantInterfaceSpec)
+        }
+
+        versions.forEach { version ->
+            val dtos =
+                generateDataTransferObjects(version, valueClassNames, existingValueClasses, modelsByName)
             val versionClass = TypeSpec.interfaceBuilder(version.name)
                 .addModifiers(KModifier.SEALED)
                 .addSuperinterface(ClassName(version.packageName, schemaFileName))
@@ -72,12 +81,31 @@ private fun generateSchemaFile(
                 .addKdoc(generateVersionBoxKdoc(version.name, version.schemaVersion!!))
                 .addTypes(dtos)
                 .build()
-            topLevelClassBuilder?.addType(versionClass)
-        } else {
-            dtos.forEach { fileBuilder.addType(it) }
+            topLevelClassBuilder.addType(versionClass)
         }
+        fileBuilder.addType(topLevelClassBuilder.build())
+    } else {
+        val model = versions.first()
+        val dtos = generateDataTransferObjects(model, valueClassNames, existingValueClasses, modelsByName)
+        val schemaInterfaceName = ClassName(representativeModel.packageName, schemaFileName)
+        val schemaBuilder = TypeSpec.interfaceBuilder(schemaInterfaceName)
+            .addModifiers(KModifier.SEALED)
+            .addKdoc("A sealed hierarchy representing all variants of the %L data model.", baseName)
+
+        if (isGloballySerializable) {
+            schemaBuilder.addAnnotation(ClassName("kotlinx.serialization", "Serializable"))
+        }
+
+        dtos.forEach { dtoSpec ->
+            schemaBuilder.addType(
+                dtoSpec.toBuilder()
+                    .addSuperinterface(schemaInterfaceName)
+                    .build()
+            )
+        }
+        fileBuilder.addType(schemaBuilder.build())
     }
-    topLevelClassBuilder?.let { fileBuilder.addType(it.build()) }
+
     generateAndAddValueClasses(
         fileBuilder = fileBuilder,
         baseName = baseName,

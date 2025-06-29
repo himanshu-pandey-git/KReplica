@@ -12,7 +12,7 @@ enum class NominalTyping {
 object Replicate {
     @Target(AnnotationTarget.CLASS)
     annotation class Model(
-        val variants: Array<Variant> = [Variant.BASE, Variant.CREATE, Variant.PATCH],
+        val variants: Array<Variant>,
         val nominalTyping: NominalTyping = NominalTyping.DISABLED
     )
 

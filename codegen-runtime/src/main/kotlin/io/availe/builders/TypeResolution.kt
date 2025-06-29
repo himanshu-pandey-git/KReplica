@@ -4,13 +4,11 @@ import com.squareup.kotlinpoet.AnnotationSpec
 import com.squareup.kotlinpoet.ClassName
 import com.squareup.kotlinpoet.ParameterizedTypeName.Companion.parameterizedBy
 import com.squareup.kotlinpoet.TypeName
-import io.availe.SCHEMA_VERSION_PROPERTY_NAME
 import io.availe.SERIALIZABLE_PATCHABLE_CLASS_NAME
 import io.availe.SERIALIZABLE_QUALIFIED_NAME
 import io.availe.models.*
 
 internal fun propertyShouldSkipWrapping(property: Property, existingValueClasses: Set<String>): Boolean {
-    if (property.name == SCHEMA_VERSION_PROPERTY_NAME) return true
     return property.typeInfo.isEnum ||
             property.typeInfo.isValueClass ||
             property.typeInfo.isDataClass ||

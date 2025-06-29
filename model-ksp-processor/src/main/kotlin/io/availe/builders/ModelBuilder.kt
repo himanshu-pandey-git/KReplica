@@ -59,7 +59,11 @@ internal fun buildModel(
 
     val modelVariantsArgument = modelAnnotation.arguments.find { it.name?.asString() == "variants" }
     val modelVariants = if (modelVariantsArgument == null) {
-        setOf(Variant.BASE, Variant.CREATE, Variant.PATCH)
+        fail(
+            environment,
+            "KReplica Error: The 'variants' argument is mandatory on @Replicate.Model for model '${declaration.simpleName.asString()}'. " +
+                    "Please explicitly specify which variants to generate, e.g., @Replicate.Model(variants = [Variant.BASE])."
+        )
     } else {
         (modelVariantsArgument.value as List<*>).map {
             Variant.valueOf((it as KSDeclaration).simpleName.asString())
@@ -90,7 +94,9 @@ internal fun buildModel(
         val schemaVersionProperty = RegularProperty(
             name = SCHEMA_VERSION_FIELD,
             typeInfo = TypeInfo("kotlin.Int", isNullable = false),
-            variants = modelVariants
+            variants = modelVariants,
+            annotations = null,
+            nominalTyping = modelNominalTyping
         )
         properties.add(schemaVersionProperty)
     }
