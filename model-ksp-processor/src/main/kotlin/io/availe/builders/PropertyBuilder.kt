@@ -36,7 +36,8 @@ internal fun processProperty(
         )
     }
 
-    val fieldAnnotation = propertyDeclaration.annotations.firstOrNull { it.isAnnotation(FIELD_ANNOTATION_NAME) }
+    val fieldAnnotation =
+        propertyDeclaration.annotations.firstOrNull { it.isAnnotation(REPLICATE_PROPERTY_ANNOTATION_NAME) }
 
     val propertyVariants = if (fieldAnnotation == null) {
         modelVariants
@@ -65,9 +66,9 @@ internal fun processProperty(
     }
 
     val useSerializerAnnotation =
-        propertyDeclaration.annotations.firstOrNull { it.shortName.asString() == "UseSerializer" }
+        propertyDeclaration.annotations.firstOrNull { it.isAnnotation(REPLICATE_WITH_SERIALIZER_ANNOTATION_NAME) }
     val forceContextualAnnotation =
-        propertyDeclaration.annotations.firstOrNull { it.shortName.asString() == "ForceContextual" }
+        propertyDeclaration.annotations.firstOrNull { it.isAnnotation(REPLICATE_FORCE_CONTEXTUAL_ANNOTATION_NAME) }
     val customSerializer = useSerializerAnnotation?.arguments?.firstOrNull()?.value as? String
     val forceContextual = forceContextualAnnotation != null
 

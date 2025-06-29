@@ -27,59 +27,60 @@ plugins {
 
 ## Example (non-versioned)
 
-This example covers how to use the `Replicate` and `ReplicateProperty` annotations.
+This example covers how to use the `Replicate.Model` and `Replicate.Property` annotations.
 
 ```kotlin
-@Replicate(
+@Replicate.Model(
     variants = [Variant.BASE, Variant.CREATE, Variant.PATCH], // required argument
     nominalTyping = NominalTyping.ENABLED // disabled by default
 )
 private interface UserAccount {
-    // This property inherits all of @Replicate's arguments
+    // This property inherits all of @Replicate.Model's arguments
     val emailAddress: String
 
     // This property is only included in the BASE variant
-    @ReplicateProperty(include = [Variant.BASE])
+    @Replicate.Property(include = [Variant.BASE])
     val id: UUID
 
     // This property is excluded from the CREATE variant
-    @ReplicateProperty(exclude = [Variant.CREATE])
+    @Replicate.Property(exclude = [Variant.CREATE])
     val banReason: Option<String>
 
     // We opt out of nominalTyping for this property
-    @ReplicateProperty(nominalTyping = NominalTyping.DISABLED)
+    @Replicate.Property(nominalTyping = NominalTyping.DISABLED)
     val userDescription: String?
 }
 ```
 
 ## Example (versioned)
 
-To version a `Replicate` declaration, create a base interface (e.g. `UserAccount`) and extend it with V\<number\>
+To version a `Replicate.Model` declaration, create a base interface (e.g. `UserAccount`) and extend it with V\<number\>
 interfaces (e.g. `V1`, `V2`) to track model changes.
 
 ```kotlin
 private interface UserAccount
 
-@Replicate(variants = [Variant.BASE])
+@Replicate.Model(variants = [Variant.BASE])
 private interface V1 : UserAccount {
     val id: Int
 }
 
-@Replicate(variants = [Variant.BASE, Variant.PATCH])
+@Replicate.Model(variants = [Variant.BASE, Variant.PATCH])
 private interface V2 : UserAccount {
     val id: Int
     val name: String
 }
 ```
 
-If you wish to not follow the V\<number\> naming convention, you must use the `SchemaVersion` annotation to manually
+If you wish to not follow the V\<number\> naming convention, you must use the `Replicate.SchemaVersion` annotation to
+manually
 specify a version number.
 
 ```kotlin
 private interface UserAccount
 
-@Replicate(variants = [Variant.BASE, Variant.PATCH])
-@SchemaVersion(1)
+@Replicate.Model(variants = [Variant.BASE, Variant.PATCH])
+@Replicate.SchemaVersion(1)
 private interface NewAccount : UserAccount {
     val id: Int
     val name: String
@@ -91,38 +92,41 @@ Note all versioned declarations automatically inject a `schema_version` property
 ## Example (serializable)
 
 Interfaces cannot directly implement some annotations, including `Serializable`. Instead, you can use Note
-`ApplyAnnotations`.
+`Replicate.Apply`.
 
 ```kotlin
-@Replicate(variants = [Variant.BASE, Variant.PATCH])
-@ApplyAnnotations(annotations = [Serializable::class])
+@Replicate.Model(variants = [Variant.BASE, Variant.PATCH])
+@Replicate.Apply(annotations = [Serializable::class])
 private interface UserAccount {
     val id: Int
 }
 ```
 
-Note that `ApplyAnnotations` can also take include/exclude arguments, if you want an annotation to only be applied to a
-specific variant. Additionally, `ApplyAnnotations` is repeatable and takes a list of annotations.
+Note that `Replicate.Apply` can also take include/exclude arguments, if you want an annotation to only be
+applied to a
+specific variant. Additionally, `Replicate.Apply` is repeatable and takes a list of annotations.
 
-The drawback of `ApplyAnnotations` is that the IDE no longer warns when `Contextual` is needed. To address this,
+The drawback of `Replicate.Apply` is that the IDE no longer warns when `Contextual` is needed. To address
+this,
 KReplica recursively applies
 `Contextual` in generated code, so it works regardless of generic nesting.
 
 Types exempt from `Contextual` are whitelisted in `codegen/src/commonMain/kotlin/io/availe/models/Constants.kt`.
 
-For manual control, use the `@UseSerializer(with = ...)` annotation. It works identically as `@Serializable(with = ...)`
+For manual control, use the `@Replicate.WithSerializer(with = ...)` annotation. It works identically as
+`@Serializable(with = ...)`
 and emits
 the latter annotation in the generated code.
 
-If you wish to force a property to use `Contextual`, you may use the annotation `@ForceContextual`.
+If you wish to force a property to use `Contextual`, you may use the annotation `@Replicate.ForceContextual`.
 
 ## Directly applying annotations
 
-If the annotation can be applied on interfaces, you can directly use it without the need for `ApplyAnnotations`. For
+If the annotation can be applied on interfaces, you can directly use it without the need for `Replicate.Apply`. For
 example:
 
 ```kotlin
-@Replicate(variants = [Variant.BASE, Variant.PATCH])
+@Replicate.Model(variants = [Variant.BASE, Variant.PATCH])
 @Deprecated("Use NewUserAccount instead")
 private interface UserAccount {
     @Deprecated("Use newId instead")
@@ -132,12 +136,13 @@ private interface UserAccount {
 
 ## The hide annotation
 
-The `@Hide` annotation stops a `Replicate` declaration from being generated. It's mainly for temporarily testing how
+The `@Replicate.Hide` annotation stops a `Replicate.Model` declaration from being generated. It's mainly for temporarily
+testing how
 code removal affects the system—but use it as you see fit.
 
 ```kotlin
-@Replicate(variants = [Variant.BASE])
-@Hide
+@Replicate.Model(variants = [Variant.BASE])
+@Replicate.Hide
 private interface UserAccount {
     val id: Int
 }

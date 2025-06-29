@@ -15,7 +15,7 @@ private fun parseApplyAnnotations(
     environment: SymbolProcessorEnvironment
 ): List<AnnotationConfigModel> {
     val applyAnnotations = declaration.annotations.filter {
-        it.isAnnotation(APPLY_ANNOTATIONS_ANNOTATION_NAME)
+        it.isAnnotation(REPLICATE_APPLY_ANNOTATION_NAME)
     }
 
     return applyAnnotations.flatMap { annotation ->

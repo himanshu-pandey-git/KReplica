@@ -9,23 +9,37 @@ enum class NominalTyping {
     INHERIT
 }
 
-@Target(AnnotationTarget.CLASS)
-annotation class Replicate(
-    val variants: Array<Variant> = [Variant.BASE, Variant.CREATE, Variant.PATCH],
-    val nominalTyping: NominalTyping = NominalTyping.DISABLED
-)
+object Replicate {
+    @Target(AnnotationTarget.CLASS)
+    annotation class Model(
+        val variants: Array<Variant> = [Variant.BASE, Variant.CREATE, Variant.PATCH],
+        val nominalTyping: NominalTyping = NominalTyping.DISABLED
+    )
 
-@Repeatable
-@Target(AnnotationTarget.CLASS)
-annotation class ApplyAnnotations(
-    val annotations: Array<KClass<out Annotation>>,
-    val include: Array<Variant> = [],
-    val exclude: Array<Variant> = []
-)
+    @Target(AnnotationTarget.PROPERTY)
+    annotation class Property(
+        val exclude: Array<Variant> = [],
+        val include: Array<Variant> = [],
+        val nominalTyping: NominalTyping = NominalTyping.INHERIT
+    )
 
-@Target(AnnotationTarget.PROPERTY)
-annotation class ReplicateProperty(
-    val exclude: Array<Variant> = [],
-    val include: Array<Variant> = [],
-    val nominalTyping: NominalTyping = NominalTyping.INHERIT
-)
+    @Repeatable
+    @Target(AnnotationTarget.CLASS)
+    annotation class Apply(
+        val annotations: Array<KClass<out Annotation>>,
+        val include: Array<Variant> = [],
+        val exclude: Array<Variant> = []
+    )
+
+    @Target(AnnotationTarget.PROPERTY)
+    annotation class WithSerializer(val with: String)
+
+    @Target(AnnotationTarget.PROPERTY)
+    annotation class ForceContextual
+
+    @Target(AnnotationTarget.CLASS)
+    annotation class SchemaVersion(val number: Int)
+
+    @Target(AnnotationTarget.CLASS)
+    annotation class Hide
+}

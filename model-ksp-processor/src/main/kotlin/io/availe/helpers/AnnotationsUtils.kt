@@ -58,7 +58,7 @@ internal fun determineVersioningInfo(
         }
         ?: return null
     val explicitVersion = declaration.annotations
-        .firstOrNull { it.isAnnotation(SCHEMA_VERSION_ANNOTATION_NAME) }
+        .firstOrNull { it.isAnnotation(REPLICATE_SCHEMA_VERSION_ANNOTATION_NAME) }
         ?.arguments
         ?.firstOrNull { it.name?.asString() == SCHEMA_VERSION_ARG }
         ?.value as? Int
@@ -119,7 +119,7 @@ fun Sequence<KSAnnotation>.toAnnotationModels(
 
 internal fun isNonHiddenModelAnnotation(declaration: KSClassDeclaration): Boolean {
     val isHidden = declaration.annotations.any {
-        it.annotationType.resolve().declaration.qualifiedName?.asString() == HIDE_ANNOTATION_NAME
+        it.annotationType.resolve().declaration.qualifiedName?.asString() == REPLICATE_HIDE_ANNOTATION_NAME
     }
     return declaration.classKind == ClassKind.INTERFACE && !isHidden
 }
@@ -127,10 +127,12 @@ internal fun isNonHiddenModelAnnotation(declaration: KSClassDeclaration): Boolea
 internal fun getFrameworkDeclarations(resolver: Resolver): Set<KSClassDeclaration> {
     return listOf(
         MODEL_ANNOTATION_NAME,
-        FIELD_ANNOTATION_NAME,
-        SCHEMA_VERSION_ANNOTATION_NAME,
-        FORCE_CONTEXTUAL_ANNOTATION_NAME,
-        USE_SERIALIZER_ANNOTATION_NAME
+        REPLICATE_PROPERTY_ANNOTATION_NAME,
+        REPLICATE_SCHEMA_VERSION_ANNOTATION_NAME,
+        REPLICATE_FORCE_CONTEXTUAL_ANNOTATION_NAME,
+        REPLICATE_WITH_SERIALIZER_ANNOTATION_NAME,
+        REPLICATE_APPLY_ANNOTATION_NAME,
+        REPLICATE_HIDE_ANNOTATION_NAME
     )
         .mapNotNull { fullyQualifiedName ->
             resolver.getClassDeclarationByName(resolver.getKSNameFromString(fullyQualifiedName))
