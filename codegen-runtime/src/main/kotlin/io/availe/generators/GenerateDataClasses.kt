@@ -8,6 +8,7 @@ import io.availe.builders.*
 import io.availe.models.ForeignProperty
 import io.availe.models.Model
 import io.availe.models.RegularProperty
+import io.availe.utils.NamingUtils
 import io.availe.utils.fieldsFor
 import org.slf4j.LoggerFactory
 
@@ -147,7 +148,9 @@ private fun determineValueClassNames(
         val model = versions.first()
         return model.properties
             .filterIsInstance<RegularProperty>()
-            .associate { (model.name to it.name) to "${model.name}${it.name.replaceFirstChar { c -> c.uppercaseChar() }}" }
+            .associate { property ->
+                (model.name to property.name) to NamingUtils.generateValueClassName(model.name, property.name)
+            }
     }
     val propertySignatures = mutableMapOf<String, String>()
     val conflictingProperties = mutableSetOf<String>()
@@ -168,9 +171,9 @@ private fun determineValueClassNames(
     return versions.flatMap { version ->
         version.properties.filterIsInstance<RegularProperty>().map { property ->
             val valueClassName = if (conflictingProperties.contains(property.name)) {
-                "$baseName${version.name}${property.name.replaceFirstChar { it.uppercaseChar() }}"
+                NamingUtils.generateValueClassName("${baseName}${version.name}", property.name)
             } else {
-                "$baseName${property.name.replaceFirstChar { it.uppercaseChar() }}"
+                NamingUtils.generateValueClassName(baseName, property.name)
             }
             (version.name to property.name) to valueClassName
         }
