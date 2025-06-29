@@ -222,40 +222,45 @@ private fun generateAndAddValueClasses(
                         Triple(property, version, className)
                     }
                 }
-        }.distinctBy { it.third }
+        }
 
-    logger.debug("Found ${allValueClassData.size} potential value classes to generate for $baseName.")
-    if (allValueClassData.isEmpty()) return
+    val groupedData = allValueClassData.groupBy { it.third }
+
+    logger.debug("Found ${groupedData.size} potential value classes to generate for $baseName.")
+    if (groupedData.isEmpty()) return
+
+    val specData = groupedData.map { (className, triples) ->
+        val representativeProperty = triples.first().first
+        val isSerializable = triples.any { (_, version, _) ->
+            version.annotationConfigs.any { it.annotation.qualifiedName == SERIALIZABLE_QUALIFIED_NAME }
+        }
+
+        object {
+            val spec = buildValueClass(className, representativeProperty, isSerializable)
+            val propertyName = representativeProperty.name
+        }
+    }
+
     val isStandalone = versions.size == 1 && versions.first().isVersionOf == null
     if (isStandalone) {
-        val valueClassSpecs = allValueClassData.map { (property, version, className) ->
-            val isSerializable =
-                version.annotationConfigs.any { it.annotation.qualifiedName == SERIALIZABLE_QUALIFIED_NAME }
-            buildValueClass(className, property, isSerializable)
-        }.sortedBy { it.name }
+        val valueClassSpecs = specData.map { it.spec }.sortedBy { it.name }
         fileBuilder.addTypesWithHeader(valueClassSpecs, STANDALONE_VALUE_CLASSES_KDOC)
     } else {
         val conflictingPropertyNames = valueClassNames.values
             .filter { it.startsWith(baseName + "V") }
             .map { it.removePrefix(baseName).drop(2).replaceFirstChar { c -> c.lowercaseChar() } }
             .toSet()
-        val (conflictedData, sharedData) = allValueClassData.partition { (property, _, _) ->
-            conflictingPropertyNames.contains(property.name)
+
+        val (conflictedData, sharedData) = specData.partition {
+            conflictingPropertyNames.contains(it.propertyName)
         }
+
         if (sharedData.isNotEmpty()) {
-            val sharedSpecs = sharedData.map { (property, version, className) ->
-                val isSerializable =
-                    version.annotationConfigs.any { it.annotation.qualifiedName == SERIALIZABLE_QUALIFIED_NAME }
-                buildValueClass(className, property, isSerializable)
-            }.sortedBy { it.name }
+            val sharedSpecs = sharedData.map { it.spec }.sortedBy { it.name }
             fileBuilder.addTypesWithHeader(sharedSpecs, SHARED_VALUE_CLASSES_KDOC)
         }
         if (conflictedData.isNotEmpty()) {
-            val conflictedSpecs = conflictedData.map { (property, version, className) ->
-                val isSerializable =
-                    version.annotationConfigs.any { it.annotation.qualifiedName == SERIALIZABLE_QUALIFIED_NAME }
-                buildValueClass(className, property, isSerializable)
-            }.sortedBy { it.name }
+            val conflictedSpecs = conflictedData.map { it.spec }.sortedBy { it.name }
             fileBuilder.addTypesWithHeader(conflictedSpecs, CONFLICTED_VALUE_CLASSES_KDOC)
         }
     }
