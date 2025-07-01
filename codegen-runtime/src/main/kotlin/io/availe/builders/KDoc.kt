@@ -1,7 +1,7 @@
 package io.availe.builders
 
 internal const val TOP_LEVEL_CLASS_KDOC: String =
-    "A sealed class hierarchy representing all versions of the %L data model."
+    "A sealed class hierarchy representing all known versions of the %L data model."
 internal const val SHARED_VALUE_CLASSES_KDOC: String =
     "SHARED VALUE CLASSES\n\nType-safe wrappers for properties that are consistent across versions."
 internal const val CONFLICTED_VALUE_CLASSES_KDOC: String =
