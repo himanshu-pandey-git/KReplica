@@ -23,8 +23,15 @@ fun registerKReplicaCodegenTask(
 ): TaskProvider<JavaExec> {
     val cleanKReplicaOutput = project.tasks.register("cleanKReplicaOutput", Delete::class.java) {
         delete(
-            project.layout.buildDirectory.dir(KReplicaPaths.KSP_GENERATED_DIR),
-            project.layout.buildDirectory.dir(KReplicaPaths.KOTLIN_POET_GENERATED_DIR)
+            project.layout.buildDirectory.dir(
+                "${KReplicaPaths.KSP_GENERATED_DIR}/${KReplicaPaths.KSP_JVM_DIR}"
+            ),
+            project.layout.buildDirectory.dir(
+                "${KReplicaPaths.KSP_GENERATED_DIR}/${KReplicaPaths.KSP_METADATA_DIR}"
+            ),
+            project.layout.buildDirectory.dir(
+                KReplicaPaths.KOTLIN_POET_GENERATED_DIR
+            )
         )
     }
 
