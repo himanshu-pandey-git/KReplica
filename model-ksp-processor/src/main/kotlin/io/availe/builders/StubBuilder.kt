@@ -38,15 +38,14 @@ private fun createStubFileFor(baseName: String, versions: List<KSClassDeclaratio
 
     val nestedContent = buildNestedStubContent(baseName, versions, isSerializable, env).prependIndent("    ")
 
+    val header = if (packageName.isNotEmpty()) "package $packageName\n\n" else ""
     val fileContent = """
-        |package $packageName
-        |
-        |$optInAnnotationString
-        |$serializableAnnotationString
-        |$visibilityModifier sealed interface $schemaFileName {
-        |$nestedContent
-        |}
-    """.trimMargin()
+        $header$optInAnnotationString
+        $serializableAnnotationString
+        $visibilityModifier sealed interface $schemaFileName {
+        $nestedContent
+        }
+    """.trimIndent()
 
     val file = env.codeGenerator.createNewFile(
         dependencies = Dependencies(true, *allSourceFiles),
@@ -56,7 +55,6 @@ private fun createStubFileFor(baseName: String, versions: List<KSClassDeclaratio
 
     file.writer().use { it.write(fileContent) }
 }
-
 
 private fun buildNestedStubContent(
     baseName: String,
@@ -73,9 +71,9 @@ private fun buildNestedStubContent(
         val variants = getVariantsFromAnnotation(model)
         return variants.joinToString("\n\n") { variant ->
             """
-            |$serializableAnnotation
-            |class ${variant.suffix}
-            """.trimMargin()
+            $serializableAnnotation
+            class ${variant.suffix}
+            """.trimIndent()
         }
     } else {
         return versions
@@ -85,17 +83,17 @@ private fun buildNestedStubContent(
                 val variants = getVariantsFromAnnotation(versionDecl)
                 val variantContent = variants.joinToString("\n\n") { variant ->
                     """
-                    |$serializableAnnotation
-                    |class ${variant.suffix}
-                    """.trimMargin()
+                    $serializableAnnotation
+                    class ${variant.suffix}
+                    """.trimIndent()
                 }.prependIndent("    ")
 
                 """
-                |$serializableAnnotation
-                |sealed interface ${versionDecl.simpleName.asString()} : ${versionInfo.baseModelName}Schema {
-                |$variantContent
-                |}
-                """.trimMargin()
+                $serializableAnnotation
+                sealed interface ${versionDecl.simpleName.asString()} : ${versionInfo.baseModelName}Schema {
+                $variantContent
+                }
+                """.trimIndent()
             }
     }
 }
