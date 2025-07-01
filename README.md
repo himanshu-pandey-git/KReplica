@@ -1,6 +1,6 @@
 # KReplica
 
-KReplica is a DTO generator for KMM and Kotlin JVM.
+KReplica is a DTO generator for KMM and Kotlin JVM. It runs automatically during Kotlin compilation.
 
 ### Features:
 
@@ -147,3 +147,71 @@ private interface UserAccount {
     val id: Int
 }
 ```
+
+## Contextual nested models
+
+Say that you previously defined `UserAccount`:
+
+```kotlin
+private interface UserAccount
+
+@Replicate.Model(variants = [Variant.BASE, Variant.CREATE, Variant.PATCH], nominalTyping = NominalTyping.ENABLED)
+private interface V1 : UserAccount {
+    val id: Int
+}
+```
+
+Now you want `UserAccount` to be included in `AdminAccount`, but in a particular format:
+
+- `AdminAccount` base variant should include `UserAccount` base variant
+- `AdminAccount` create variant should include `UserAccount` create variant
+- `AdminAccount` patch variant should include `UserAccount` patch variant
+
+You could use the `Replicate.Property` annotation to manually configure each field, or you can take advantage of
+contextual nested models:
+
+```kotlin
+@Replicate.Model(variants = [Variant.BASE, Variant.CREATE, Variant.PATCH])
+private interface AdminAccount {
+    val user: UserAccountSchema.V1
+}
+```
+
+Or if `UserAccount` was a non-versioned schema:
+
+```kotlin
+@Replicate.Model(variants = [Variant.BASE, Variant.CREATE, Variant.PATCH])
+private interface AdminAccount {
+    val user: UserAccountSchema
+}
+```
+
+## FAQ
+
+### Can a field have a broader replication than its parent @ModelGen?
+
+No. The replication of all children must be a subset of the parent (⊆), including for nested models. Otherwise, KReplica
+will error and log the offending fields.
+This rule ensures fail-fast feedback. If you restrict a parent’s replication but forget to update a child field, you’ll
+get an immediate build-time error.
+
+### If a @Replicate.Model has another @Replicate.Model as a field, does the order of compilation matter?
+
+No. KReplica actually cleans the build folder at the start of each run (which ensures no stale data). To ensure that
+nested contextuals work, KReplica uses two-pass compilation. Prior to the main compilation, stub files of all
+`Replicate.Model` declarations, which can be referenced (and overwritten) during the main compilation phase.
+
+### Why do all the examples use the private keyword (private interface)?
+
+The `private` keyword is not required for KReplica to function. However, the KReplica interfaces are useless outside
+of KReplica, so I prefer to private them so they don't contaminate the name space.
+
+This is particularly important with versioned schemas, as the V[number] naming convention is repetitive and you cannot
+redeclare interfaces. This does mean, however, that only one versioned schema can exist per file.
+
+### Is KReplica actively maintained?
+
+Yes. I use KReplica in my own internal projects, so it receives updates and bug fixes as needed.
+
+The codebase was originally part of a larger project before being separated into its own repository, so it has been
+developed and refined based on my own use cases. Broader feedback and contributions are always welcome!
