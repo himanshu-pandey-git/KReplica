@@ -3,6 +3,7 @@
 package io.availe.gradle
 
 import io.availe.KReplicaExtension
+import io.availe.models.KReplicaPaths
 import org.gradle.api.GradleException
 import org.gradle.api.Project
 import org.gradle.api.tasks.Delete
@@ -21,9 +22,10 @@ fun registerKReplicaCodegenTask(
     projectVersion: String
 ): TaskProvider<JavaExec> {
     val cleanKReplicaOutput = project.tasks.register("cleanKReplicaOutput", Delete::class.java) {
-        delete(project.layout.buildDirectory.dir("generated-src/kotlin-poet"))
-        delete(project.layout.buildDirectory.file("generated/ksp/main/resources/models.json"))
-        delete(project.layout.buildDirectory.file("generated/ksp/metadata/commonMain/resources/models.json"))
+        delete(
+            project.layout.buildDirectory.dir(KReplicaPaths.KSP_GENERATED_DIR),
+            project.layout.buildDirectory.dir(KReplicaPaths.KOTLIN_POET_GENERATED_DIR)
+        )
     }
 
     project.tasks.matching { it.name == kspTaskName }.configureEach {
@@ -46,8 +48,20 @@ fun registerKReplicaCodegenTask(
             .withPropertyName("primaryModelJson")
         inputs.files(extension.contextModelJsons).withPathSensitivity(PathSensitivity.ABSOLUTE)
             .withPropertyName("contextModelJsons")
+
         doFirst {
+            val kspOutputDir = if (kspTaskName == "kspCommonMainKotlinMetadata") {
+                project.layout.buildDirectory.dir("${KReplicaPaths.KSP_GENERATED_DIR}/${KReplicaPaths.KSP_METADATA_DIR}/${KReplicaPaths.KOTLIN_DIR}")
+                    .get().asFile
+            } else {
+                project.layout.buildDirectory.dir("${KReplicaPaths.KSP_GENERATED_DIR}/${KReplicaPaths.KSP_JVM_DIR}/${KReplicaPaths.KOTLIN_DIR}")
+                    .get().asFile
+            }
+
             val execArgs = mutableListOf<String>()
+            execArgs.add("--output-dir")
+            execArgs.add(kspOutputDir.absolutePath)
+
             val primaryFile = extension.primaryModelJson.get().asFile
             if (primaryFile.exists()) {
                 execArgs.add(primaryFile.absolutePath)

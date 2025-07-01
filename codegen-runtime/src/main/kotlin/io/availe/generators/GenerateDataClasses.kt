@@ -1,7 +1,6 @@
 package io.availe.generators
 
 import com.squareup.kotlinpoet.*
-import io.availe.OUTPUT_DIRECTORY
 import io.availe.SCHEMA_SUFFIX
 import io.availe.SERIALIZABLE_QUALIFIED_NAME
 import io.availe.builders.*
@@ -11,12 +10,13 @@ import io.availe.models.RegularProperty
 import io.availe.utils.NamingUtils
 import io.availe.utils.fieldsFor
 import org.slf4j.LoggerFactory
+import java.io.File
 
 private val logger = LoggerFactory.getLogger("io.availe.generators")
 
-fun generateDataClasses(primaryModels: List<Model>, allModels: List<Model>) {
+fun generateDataClasses(primaryModels: List<Model>, allModels: List<Model>, outputDir: File) {
     val allModelsByBaseName = allModels.groupBy { it.isVersionOf ?: it.name }
-    val modelsByName = allModels.associateBy { it.packageName + "." + it.name }
+    val modelsByName = allModels.associateBy { it.name }
     val valueClassNamesByBase = allModelsByBaseName.mapValues { (base, versions) ->
         determineValueClassNames(base, versions)
     }
@@ -24,7 +24,7 @@ fun generateDataClasses(primaryModels: List<Model>, allModels: List<Model>) {
     val primaryModelsByBaseName = primaryModels.groupBy { it.isVersionOf ?: it.name }
     primaryModelsByBaseName.forEach { (baseName, versions) ->
         val mapForBase = valueClassNamesByBase[baseName]!!
-        generateSchemaFile(baseName, versions, mapForBase, globalValueClasses, modelsByName)
+        generateSchemaFile(baseName, versions, mapForBase, globalValueClasses, modelsByName, outputDir)
     }
 }
 
@@ -33,7 +33,8 @@ private fun generateSchemaFile(
     versions: List<Model>,
     valueClassNames: Map<Pair<String, String>, String>,
     existingValueClasses: Set<String>,
-    modelsByName: Map<String, Model>
+    modelsByName: Map<String, Model>,
+    outputDir: File
 ) {
     val isVersioned = versions.first().isVersionOf != null
     val representativeModel = versions.first()
@@ -114,7 +115,7 @@ private fun generateSchemaFile(
         valueClassNames = valueClassNames,
         existingValueClasses = existingValueClasses
     )
-    fileBuilder.build().writeTo(OUTPUT_DIRECTORY)
+    fileBuilder.build().writeTo(outputDir)
 }
 
 private fun generateDataTransferObjects(

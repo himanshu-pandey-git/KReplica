@@ -1,8 +1,8 @@
 package io.availe.gradle
 
 import io.availe.KReplicaExtension
+import io.availe.models.KReplicaPaths
 import org.gradle.api.Project
-import org.jetbrains.kotlin.gradle.dsl.KotlinJvmProjectExtension
 
 fun applyJvmConvention(project: Project, extension: KReplicaExtension, projectVersion: String) {
     project.logger.info("--- KREPLICA-PLUGIN: Applying JVM Convention to ${project.path} ---")
@@ -15,13 +15,11 @@ fun applyJvmConvention(project: Project, extension: KReplicaExtension, projectVe
     }
 
     extension.primaryModelJson.set(
-        project.layout.buildDirectory.file("generated/ksp/main/resources/models.json")
+        project.layout.buildDirectory.file(
+            "${KReplicaPaths.KSP_GENERATED_DIR}/${KReplicaPaths.KSP_JVM_DIR}/${KReplicaPaths.RESOURCES_DIR}/${KReplicaPaths.MODELS_JSON_FILE}"
+        )
     )
     extension.primaryModelJson.disallowChanges()
 
     registerKReplicaCodegenTask(project, extension, "kspKotlin", projectVersion)
-
-    project.extensions.getByType(KotlinJvmProjectExtension::class.java).sourceSets.getByName("main").kotlin.srcDir(
-        project.layout.buildDirectory.dir("generated-src/kotlin-poet")
-    )
 }

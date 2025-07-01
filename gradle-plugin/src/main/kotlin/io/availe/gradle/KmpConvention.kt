@@ -1,6 +1,7 @@
 package io.availe.gradle
 
 import io.availe.KReplicaExtension
+import io.availe.models.KReplicaPaths
 import org.gradle.api.Project
 import org.jetbrains.kotlin.gradle.dsl.KotlinMultiplatformExtension
 
@@ -19,13 +20,11 @@ fun applyKmpConvention(project: Project, extension: KReplicaExtension, projectVe
     }
 
     extension.primaryModelJson.set(
-        project.layout.buildDirectory.file("generated/ksp/metadata/commonMain/resources/models.json")
+        project.layout.buildDirectory.file(
+            "${KReplicaPaths.KSP_GENERATED_DIR}/${KReplicaPaths.KSP_METADATA_DIR}/${KReplicaPaths.RESOURCES_DIR}/${KReplicaPaths.MODELS_JSON_FILE}"
+        )
     )
     extension.primaryModelJson.disallowChanges()
 
     registerKReplicaCodegenTask(project, extension, "kspCommonMainKotlinMetadata", projectVersion)
-
-    kmpExt.sourceSets.getByName("commonMain").kotlin.srcDir(
-        project.layout.buildDirectory.dir("generated-src/kotlin-poet")
-    )
 }

@@ -1,10 +1,13 @@
 package io.availe
 
+import com.google.devtools.ksp.gradle.KspExtension
 import io.availe.gradle.applyJvmConvention
 import io.availe.gradle.applyKmpConvention
+import io.availe.models.KReplicaPaths
 import org.gradle.api.Plugin
 import org.gradle.api.Project
 import org.gradle.api.tasks.JavaExec
+import org.gradle.kotlin.dsl.getByType
 import org.gradle.kotlin.dsl.named
 
 class KReplicaPlugin : Plugin<Project> {
@@ -29,6 +32,11 @@ class KReplicaPlugin : Plugin<Project> {
                     target.logger.warn("KReplica: No supported Kotlin plugin found (multiplatform or jvm). No convention applied.")
                 }
             }
+
+            target.extensions.getByType<KspExtension>().arg(
+                "kreplica.output.dir",
+                target.layout.buildDirectory.dir(KReplicaPaths.KOTLIN_POET_GENERATED_DIR).get().asFile.absolutePath
+            )
         }
 
         target.afterEvaluate {
@@ -42,11 +50,13 @@ class KReplicaPlugin : Plugin<Project> {
                 val contextKspTaskName: String
 
                 if (contextProject.plugins.hasPlugin("org.jetbrains.kotlin.multiplatform")) {
-                    modelJsonPath = "generated/ksp/metadata/commonMain/resources/models.json"
+                    modelJsonPath =
+                        "${KReplicaPaths.KSP_GENERATED_DIR}/${KReplicaPaths.KSP_METADATA_DIR}/${KReplicaPaths.RESOURCES_DIR}/${KReplicaPaths.MODELS_JSON_FILE}"
                     kspConfigurationName = "ksp"
                     contextKspTaskName = "kspCommonMainKotlinMetadata"
                 } else if (contextProject.plugins.hasPlugin("org.jetbrains.kotlin.jvm")) {
-                    modelJsonPath = "generated/ksp/main/resources/models.json"
+                    modelJsonPath =
+                        "${KReplicaPaths.KSP_GENERATED_DIR}/${KReplicaPaths.KSP_JVM_DIR}/${KReplicaPaths.RESOURCES_DIR}/${KReplicaPaths.MODELS_JSON_FILE}"
                     kspConfigurationName = "ksp"
                     contextKspTaskName = "kspKotlin"
                 } else {

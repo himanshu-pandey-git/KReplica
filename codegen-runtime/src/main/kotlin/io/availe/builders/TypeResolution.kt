@@ -80,7 +80,8 @@ internal fun buildRecursiveDtoTypeName(
     modelsByName: Map<String, Model>,
     isCurrentContainerSerializable: Boolean
 ): TypeName {
-    val targetModel = modelsByName[typeInfo.qualifiedName]
+    val simpleName = typeInfo.qualifiedName.substringAfterLast('.')
+    val targetModel = modelsByName[simpleName]
 
     if (typeInfo.arguments.isEmpty()) {
         if (targetModel == null) {

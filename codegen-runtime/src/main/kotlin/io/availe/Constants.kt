@@ -1,8 +1,5 @@
 package io.availe
 
-import java.io.File
-
-internal val OUTPUT_DIRECTORY = File("build/generated-src/kotlin-poet")
 internal const val MODELS_PACKAGE_NAME = "io.availe.models"
 
 internal const val SCHEMA_SUFFIX = "Schema"

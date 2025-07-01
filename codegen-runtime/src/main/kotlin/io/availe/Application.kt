@@ -13,7 +13,34 @@ private val logger = LoggerFactory.getLogger("io.availe.ApplicationKt")
 fun main(args: Array<String>) {
     logger.info("--- KREPLICA-CODEGEN: Codegen Runtime STARTING ---")
     try {
-        val (flags, jsonPaths) = args.partition { it.startsWith("--") }
+        var outputDir: File? = null
+        val remainingArgs = mutableListOf<String>()
+        var i = 0
+        while (i < args.size) {
+            when (args[i]) {
+                "--output-dir" -> {
+                    if (i + 1 < args.size) {
+                        outputDir = File(args[i + 1])
+                        i += 2
+                    } else {
+                        logger.error("--- KREPLICA-CODEGEN: --output-dir flag requires a value.")
+                        exitProcess(1)
+                    }
+                }
+
+                else -> {
+                    remainingArgs.add(args[i])
+                    i++
+                }
+            }
+        }
+
+        if (outputDir == null) {
+            logger.error("--- KREPLICA-CODEGEN: Missing required --output-dir argument.")
+            exitProcess(1)
+        }
+
+        val (flags, jsonPaths) = remainingArgs.partition { it.startsWith("--") }
 
         if (jsonPaths.isEmpty()) {
             logger.info("--- KREPLICA-CODEGEN: Codegen Runtime received no input paths. Exiting. ---")
@@ -53,7 +80,7 @@ fun main(args: Array<String>) {
         validateModelReplications(allModels)
         logger.info("--- KREPLICA-CODEGEN: Model definitions validated successfully.")
 
-        generateDataClasses(primaryModels, allModels)
+        generateDataClasses(primaryModels, allModels, outputDir)
         logger.info("--- KREPLICA-CODEGEN: Codegen Runtime FINISHED ---")
 
     } catch (e: Exception) {
