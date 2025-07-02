@@ -119,10 +119,16 @@ private fun createForeignProperty(
     annotations: List<AnnotationModel>?,
     nominalTyping: String?
 ): ForeignProperty {
+    val simpleName = foreignModelDeclaration.simpleName.asString()
+    val foreignModelNameForLookup = if (simpleName.endsWith("Schema")) {
+        simpleName.removeSuffix("Schema")
+    } else {
+        simpleName
+    }
     return ForeignProperty(
         name = propertyDeclaration.simpleName.asString(),
         typeInfo = typeInformation,
-        foreignModelName = foreignModelDeclaration.simpleName.asString(),
+        foreignModelName = foreignModelNameForLookup,
         variants = variants,
         annotations = annotations,
         nominalTyping = nominalTyping

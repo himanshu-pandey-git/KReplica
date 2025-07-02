@@ -81,7 +81,8 @@ internal fun buildRecursiveDtoTypeName(
     isCurrentContainerSerializable: Boolean
 ): TypeName {
     val simpleName = typeInfo.qualifiedName.substringAfterLast('.')
-    val targetModel = modelsByName[simpleName]
+    val lookupKey = if (simpleName.endsWith("Schema")) simpleName.removeSuffix("Schema") else simpleName
+    val targetModel = modelsByName[lookupKey]
 
     if (typeInfo.arguments.isEmpty()) {
         if (targetModel == null) {
@@ -91,7 +92,7 @@ internal fun buildRecursiveDtoTypeName(
         val finalDtoName = if (targetModel.isVersionOf != null) {
             ClassName(targetModel.packageName, "${targetModel.isVersionOf}Schema", targetModel.name, variant.suffix)
         } else {
-            ClassName(targetModel.packageName, "${targetModel.name}${variant.suffix}")
+            ClassName(targetModel.packageName, "${targetModel.name}Schema", variant.suffix)
         }
         return finalDtoName.copy(nullable = typeInfo.isNullable)
     } else {
