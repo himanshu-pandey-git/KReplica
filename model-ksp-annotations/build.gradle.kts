@@ -7,9 +7,6 @@ plugins {
     `maven-publish`
 }
 
-group = "io.availe"
-version = "1.0.0"
-
 kotlin {
     jvm()
     iosX64()

@@ -8,9 +8,6 @@ plugins {
     `maven-publish`
 }
 
-group = "io.availe"
-version = "1.0.0"
-
 kotlin {
     jvmToolchain(21)
     jvm()
