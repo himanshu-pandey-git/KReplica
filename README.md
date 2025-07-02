@@ -14,7 +14,7 @@ KReplica is a DTO generator for KMM and Kotlin JVM. It runs automatically during
 * **Plain Kotlin:** Emits plain Kotlin source files to your build directory, free of framework-specific code or runtime
   dependencies.
 
-## 🚀 Quick Start
+## Quick Start
 
 Add the KSP and KReplica plugins to your module's `build.gradle.kts`:
 
