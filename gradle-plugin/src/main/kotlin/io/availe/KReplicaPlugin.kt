@@ -15,7 +15,7 @@ class KReplicaPlugin : Plugin<Project> {
         target.logger.info("--- KREPLICA-PLUGIN: Applying 'io.availe.kreplica' to project ${target.path} ---")
         val extension = target.extensions.create("kreplica", KReplicaExtension::class.java)
 
-        val projectVersion = target.version.toString().removeSurrounding("\"")
+        val projectVersion = "1.0.0"
 
         target.plugins.withId("com.google.devtools.ksp") {
             target.logger.info("--- KREPLICA-PLUGIN: KSP plugin found in ${target.path}. Configuring conventions. ---")

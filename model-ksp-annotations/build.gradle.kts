@@ -8,6 +8,8 @@ plugins {
 }
 
 kotlin {
+    jvmToolchain(21)
+
     jvm()
     iosX64()
     iosArm64()

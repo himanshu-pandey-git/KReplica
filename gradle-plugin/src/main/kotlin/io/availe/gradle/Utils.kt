@@ -56,6 +56,11 @@ fun registerKReplicaCodegenTask(
         inputs.files(extension.contextModelJsons).withPathSensitivity(PathSensitivity.ABSOLUTE)
             .withPropertyName("contextModelJsons")
 
+        val kspTask = project.tasks.named(kspTaskName)
+        inputs.files(kspTask.get().outputs.files)
+            .withPropertyName("kspTaskOutputs")
+            .withPathSensitivity(PathSensitivity.ABSOLUTE)
+
         doFirst {
             val kspOutputDir = if (kspTaskName == "kspCommonMainKotlinMetadata") {
                 project.layout.buildDirectory.dir("${KReplicaPaths.KSP_GENERATED_DIR}/${KReplicaPaths.KSP_METADATA_DIR}/${KReplicaPaths.KOTLIN_DIR}")

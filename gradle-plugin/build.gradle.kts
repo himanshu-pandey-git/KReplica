@@ -5,6 +5,10 @@ plugins {
     `maven-publish`
 }
 
+kotlin {
+    jvmToolchain(21)
+}
+
 gradlePlugin {
     plugins {
         create("kreplica") {

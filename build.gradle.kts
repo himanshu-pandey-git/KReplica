@@ -14,10 +14,9 @@ plugins {
 }
 
 allprojects {
-    group   = providers.gradleProperty("GROUP").get()
-    version = providers.gradleProperty("VERSION_NAME").get()
+    group   = "io.availe"
+    version = "1.0.0"
 }
-
 
 subprojects {
     apply(plugin = "com.github.ben-manes.versions")

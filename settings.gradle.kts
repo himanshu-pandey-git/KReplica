@@ -1,4 +1,4 @@
-rootProject.name = "availe"
+rootProject.name = "kreplica-plugin"
 enableFeaturePreview("TYPESAFE_PROJECT_ACCESSORS")
 
 pluginManagement {

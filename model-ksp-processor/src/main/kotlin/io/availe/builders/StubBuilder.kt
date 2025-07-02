@@ -6,6 +6,8 @@ import com.google.devtools.ksp.symbol.KSClassDeclaration
 import com.google.devtools.ksp.symbol.KSDeclaration
 import com.google.devtools.ksp.symbol.KSType
 import com.google.devtools.ksp.symbol.Modifier
+import com.squareup.kotlinpoet.*
+import com.squareup.kotlinpoet.ksp.writeTo
 import io.availe.helpers.*
 import io.availe.models.Variant
 
@@ -20,85 +22,93 @@ internal fun generateStubs(declarations: List<KSClassDeclaration>, env: SymbolPr
     }
 }
 
+private fun String.asClassName(): ClassName {
+    val cleanName = this.substringBefore('<').removeSuffix("?")
+    val packageName = cleanName.substringBeforeLast('.')
+    val simpleName = cleanName.substringAfterLast('.')
+    return ClassName(packageName, simpleName)
+}
+
 private fun createStubFileFor(baseName: String, versions: List<KSClassDeclaration>, env: SymbolProcessorEnvironment) {
     val representativeModel = versions.first()
     val packageName = representativeModel.packageName.asString()
     val schemaFileName = baseName + "Schema"
     val allSourceFiles = versions.mapNotNull { it.containingFile }.toTypedArray()
+    val schemaClassName = ClassName(packageName, schemaFileName)
 
-    val visibilityModifier = if (representativeModel.modifiers.contains(Modifier.INTERNAL)) "internal" else "public"
+    val visibilityModifier =
+        if (representativeModel.modifiers.contains(Modifier.INTERNAL)) KModifier.INTERNAL else KModifier.PUBLIC
 
-    val optInMarkers = versions.flatMap { extractAllOptInMarkers(it) }.distinct()
-    val optInAnnotationString = if (optInMarkers.isNotEmpty()) {
-        "@kotlin.OptIn(${optInMarkers.joinToString(", ") { "$it::class" }})"
-    } else ""
+    val isGloballySerializable = versions.any { isModelSerializable(it) }
 
-    val isSerializable = versions.any { isModelSerializable(it) }
-    val serializableAnnotationString = if (isSerializable) "@kotlinx.serialization.Serializable" else ""
+    val schemaInterfaceBuilder = TypeSpec.interfaceBuilder(schemaClassName)
+        .addModifiers(KModifier.SEALED, visibilityModifier)
 
-    val nestedContent = buildNestedStubContent(baseName, versions, isSerializable, env).prependIndent("    ")
+    if (isGloballySerializable) {
+        schemaInterfaceBuilder.addAnnotation(ClassName("kotlinx.serialization", "Serializable"))
+    }
 
-    val fileContent = """
-        |package $packageName
-        |
-        |$optInAnnotationString
-        |$serializableAnnotationString
-        |$visibilityModifier sealed interface $schemaFileName {
-        |$nestedContent
-        |}
-    """.trimMargin()
+    val isVersioned = determineVersioningInfo(representativeModel, env) != null
 
-    val file = env.codeGenerator.createNewFile(
-        dependencies = Dependencies(true, *allSourceFiles),
-        packageName = packageName,
-        fileName = schemaFileName
-    )
+    if (isVersioned) {
+        versions.forEach { versionDecl ->
+            val versionInfo = determineVersioningInfo(versionDecl, env)
+                ?: error("Could not determine version info for ${versionDecl.simpleName.asString()}")
+            val versionClassName = schemaClassName.nestedClass(versionDecl.simpleName.asString())
+            val isVersionSerializable = isModelSerializable(versionDecl)
 
-    file.writer().use { it.write(fileContent) }
-}
+            val versionInterfaceBuilder = TypeSpec.interfaceBuilder(versionClassName)
+                .addModifiers(KModifier.SEALED)
+                .addSuperinterface(schemaClassName)
 
+            if (isGloballySerializable || isVersionSerializable) {
+                versionInterfaceBuilder.addAnnotation(ClassName("kotlinx.serialization", "Serializable"))
+            }
 
-private fun buildNestedStubContent(
-    baseName: String,
-    versions: List<KSClassDeclaration>,
-    isParentSerializable: Boolean,
-    env: SymbolProcessorEnvironment
-): String {
-    val representative = versions.first()
-    val isVersioned = determineVersioningInfo(representative, env) != null
-    val serializableAnnotation = if (isParentSerializable) "@kotlinx.serialization.Serializable" else ""
-
-    if (!isVersioned) {
-        val model = versions.first()
-        val variants = getVariantsFromAnnotation(model)
-        return variants.joinToString("\n\n") { variant ->
-            """
-            |$serializableAnnotation
-            |class ${variant.suffix}
-            """.trimMargin()
+            val variants = getVariantsFromAnnotation(versionDecl)
+            variants.forEach { variant ->
+                val variantClassBuilder = TypeSpec.classBuilder(variant.suffix)
+                    .addSuperinterface(versionClassName)
+                if (isGloballySerializable || isVersionSerializable) {
+                    variantClassBuilder.addAnnotation(ClassName("kotlinx.serialization", "Serializable"))
+                }
+                versionInterfaceBuilder.addType(variantClassBuilder.build())
+            }
+            schemaInterfaceBuilder.addType(versionInterfaceBuilder.build())
         }
     } else {
-        return versions
-            .filter { determineVersioningInfo(it, env) != null }
-            .joinToString("\n\n") { versionDecl ->
-                val versionInfo = determineVersioningInfo(versionDecl, env)!!
-                val variants = getVariantsFromAnnotation(versionDecl)
-                val variantContent = variants.joinToString("\n\n") { variant ->
-                    """
-                    |$serializableAnnotation
-                    |class ${variant.suffix}
-                    """.trimMargin()
-                }.prependIndent("    ")
-
-                """
-                |$serializableAnnotation
-                |sealed interface ${versionDecl.simpleName.asString()} : ${versionInfo.baseModelName}Schema {
-                |$variantContent
-                |}
-                """.trimMargin()
+        val model = versions.first()
+        val variants = getVariantsFromAnnotation(model)
+        variants.forEach { variant ->
+            val variantClassBuilder = TypeSpec.classBuilder(variant.suffix)
+                .addSuperinterface(schemaClassName)
+            if (isGloballySerializable) {
+                variantClassBuilder.addAnnotation(ClassName("kotlinx.serialization", "Serializable"))
             }
+            schemaInterfaceBuilder.addType(variantClassBuilder.build())
+        }
     }
+
+    val fileBuilder = FileSpec.builder(packageName, schemaFileName)
+        .addType(schemaInterfaceBuilder.build())
+
+    val optInMarkers = versions.flatMap { extractAllOptInMarkers(it) }.distinct()
+    if (optInMarkers.isNotEmpty()) {
+        val format = optInMarkers.joinToString(", ") { "%T::class" }
+        val args = optInMarkers.map { it.asClassName() }.toTypedArray()
+        fileBuilder.addAnnotation(
+            AnnotationSpec.builder(ClassName("kotlin", "OptIn"))
+                .addMember(format, *args)
+                .build()
+        )
+    }
+
+    fileBuilder.build().writeTo(
+        codeGenerator = env.codeGenerator,
+        dependencies = Dependencies(true, *allSourceFiles)
+    )
 }
+
 
 private fun getVariantsFromAnnotation(declaration: KSClassDeclaration): List<Variant> {
     val modelAnnotation = declaration.annotations.first { it.isAnnotation(MODEL_ANNOTATION_NAME) }
@@ -111,6 +121,11 @@ private fun getVariantsFromAnnotation(declaration: KSClassDeclaration): List<Var
 }
 
 private fun isModelSerializable(declaration: KSClassDeclaration): Boolean {
+    val hasSerializableAnnotation = declaration.annotations.any { annotation ->
+        annotation.isAnnotation(SERIALIZABLE_ANNOTATION_FQN)
+    }
+    if (hasSerializableAnnotation) return true
+
     return declaration.annotations.any { annotation ->
         if (!annotation.isAnnotation(REPLICATE_APPLY_ANNOTATION_NAME)) return@any false
         val annotationsArg = annotation.arguments.find { it.name?.asString() == "annotations" }?.value as? List<*>
