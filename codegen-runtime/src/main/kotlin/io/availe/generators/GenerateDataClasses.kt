@@ -193,8 +193,7 @@ private fun propertyNeedsValueClassWrapper(
             property.typeInfo.isValueClass ||
             property.typeInfo.isDataClass ||
             property is ForeignProperty ||
-            existingValueClasses.contains(property.typeInfo.qualifiedName) ||
-            property.typeInfo.qualifiedName.startsWith("kotlin.collections.")
+            existingValueClasses.contains(property.typeInfo.qualifiedName)
 
     logger.debug(
         "Evaluating property='${property.name}' for value class wrapping. Result: ${!skip} " +

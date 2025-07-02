@@ -12,8 +12,7 @@ internal fun propertyShouldSkipWrapping(property: Property, existingValueClasses
     return property.typeInfo.isEnum ||
             property.typeInfo.isValueClass ||
             property.typeInfo.isDataClass ||
-            existingValueClasses.contains(property.typeInfo.qualifiedName) ||
-            property.typeInfo.qualifiedName.startsWith("kotlin.collections.")
+            existingValueClasses.contains(property.typeInfo.qualifiedName)
 }
 
 internal fun resolveTypeNameForProperty(
