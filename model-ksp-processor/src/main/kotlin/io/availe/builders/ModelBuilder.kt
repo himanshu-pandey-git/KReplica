@@ -84,6 +84,7 @@ internal fun buildModel(
     }
 
     val annotationConfigs = parseApplyAnnotations(declaration, modelVariants, environment)
+    val modelAnnotations = declaration.annotations.toAnnotationModels(frameworkDeclarations)
 
     val versioningInfo = determineVersioningInfo(declaration, environment)
     val properties = declaration.getAllProperties().map { property ->
@@ -109,6 +110,7 @@ internal fun buildModel(
         properties = properties,
         variants = modelVariants,
         annotationConfigs = annotationConfigs,
+        annotations = modelAnnotations,
         optInMarkers = allOptInMarkers,
         isVersionOf = versioningInfo?.baseModelName,
         schemaVersion = versioningInfo?.schemaVersion,

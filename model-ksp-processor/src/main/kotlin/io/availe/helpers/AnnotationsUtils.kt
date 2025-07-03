@@ -93,6 +93,7 @@ private fun ksAnnotationToModel(
             is List<*> -> {
                 val listContents = rawValue.joinToString(", ") { item ->
                     when (item) {
+                        is String -> "\"${item.replace("\"", "\\\"")}\""
                         is KSType -> "${item.declaration.qualifiedName!!.asString()}::class"
                         else -> item.toString()
                     }

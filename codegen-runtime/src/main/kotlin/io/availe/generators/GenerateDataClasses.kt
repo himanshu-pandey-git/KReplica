@@ -74,6 +74,9 @@ private fun generateSchemaFile(
                 .addModifiers(KModifier.SEALED)
                 .addSuperinterface(ClassName(version.packageName, schemaFileName))
                 .apply {
+                    version.annotations?.forEach { annotationModel ->
+                        addAnnotation(buildAnnotationSpec(annotationModel))
+                    }
                     val isVersionSerializable =
                         version.annotationConfigs.any { it.annotation.qualifiedName == SERIALIZABLE_QUALIFIED_NAME }
                     if (isVersionSerializable) {
@@ -93,6 +96,10 @@ private fun generateSchemaFile(
         val schemaBuilder = TypeSpec.interfaceBuilder(schemaInterfaceName)
             .addModifiers(KModifier.SEALED)
             .addKdoc("A sealed hierarchy representing all variants of the %L data model.", baseName)
+
+        model.annotations?.forEach { annotationModel ->
+            schemaBuilder.addAnnotation(buildAnnotationSpec(annotationModel))
+        }
 
         if (isGloballySerializable) {
             schemaBuilder.addAnnotation(ClassName("kotlinx.serialization", "Serializable"))

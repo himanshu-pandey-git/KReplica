@@ -15,6 +15,7 @@ data class Model(
     val properties: List<Property>,
     val variants: Set<Variant>,
     val annotationConfigs: List<AnnotationConfigModel> = emptyList(),
+    val annotations: List<AnnotationModel>? = null,
     val optInMarkers: List<String>? = null,
     val isVersionOf: String? = null,
     val schemaVersion: Int? = null,

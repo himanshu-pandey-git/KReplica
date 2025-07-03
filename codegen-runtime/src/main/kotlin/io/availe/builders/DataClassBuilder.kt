@@ -34,6 +34,10 @@ fun buildDataTransferObjectClass(
 
     val typeSpecBuilder = TypeSpec.classBuilder(generatedClassName).addModifiers(KModifier.DATA)
 
+    model.annotations?.forEach { annotationModel ->
+        typeSpecBuilder.addAnnotation(buildAnnotationSpec(annotationModel))
+    }
+
     model.annotationConfigs.filter { variant in it.variants }.forEach { config ->
         typeSpecBuilder.addAnnotation(buildAnnotationSpec(config.annotation))
     }
