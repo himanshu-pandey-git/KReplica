@@ -11,6 +11,12 @@ import kotlin.system.exitProcess
 private val logger = LoggerFactory.getLogger("io.availe.ApplicationKt")
 
 fun main(args: Array<String>) {
+    logger.info("--- KREPLICA-CODEGEN: Codegen Runtime launched with arguments ---")
+    args.forEachIndexed { index, arg ->
+        logger.info("ARG[$index]: $arg")
+    }
+    logger.info("--- KREPLICA-CODEGEN: End of arguments ---")
+
     logger.info("--- KREPLICA-CODEGEN: Codegen Runtime STARTING ---")
     try {
         var outputDir: File? = null

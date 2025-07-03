@@ -1,5 +1,7 @@
 package io.availe.gradle
 
+import io.availe.gradle.KReplicaModelAttribute.KREPLICA_MODEL_TYPE_ATTRIBUTE
+import io.availe.gradle.KReplicaModelAttribute.MODELS_JSON_TYPE
 import io.availe.models.KReplicaPaths
 import org.gradle.api.Project
 import org.gradle.api.file.RegularFile
@@ -23,9 +25,24 @@ fun applyKmpConvention(project: Project, projectVersion: String) {
         add("kspCommonMainMetadata", "io.availe:model-ksp-processor:$projectVersion")
     }
 
+    project.configurations.create("kreplicaModelsElements") {
+        isCanBeConsumed = true
+        isCanBeResolved = false
+        description = "Exposes the models.json file for other KReplica projects to consume."
+        attributes {
+            attribute(KREPLICA_MODEL_TYPE_ATTRIBUTE, MODELS_JSON_TYPE)
+        }
+    }
+
     val primaryModelJsonProvider: Provider<RegularFile> = project.layout.buildDirectory.file(
         "${KReplicaPaths.KSP_GENERATED_DIR}/${KReplicaPaths.KSP_METADATA_DIR}/${KReplicaPaths.RESOURCES_DIR}/${KReplicaPaths.MODELS_JSON_FILE}"
     )
+
+    project.artifacts {
+        add("kreplicaModelsElements", primaryModelJsonProvider) {
+            builtBy("kspCommonMainKotlinMetadata")
+        }
+    }
 
     registerKReplicaCodegenTask(project, "kspCommonMainKotlinMetadata", projectVersion, primaryModelJsonProvider)
 }

@@ -7,10 +7,8 @@ import org.gradle.api.file.RegularFile
 import org.gradle.api.provider.Provider
 import org.gradle.api.tasks.Delete
 import org.gradle.api.tasks.JavaExec
-import org.gradle.api.tasks.PathSensitivity
 import org.gradle.api.tasks.TaskProvider
 import org.gradle.kotlin.dsl.withType
-import org.gradle.process.CommandLineArgumentProvider
 import org.jetbrains.kotlin.gradle.dsl.KotlinMultiplatformExtension
 import org.jetbrains.kotlin.gradle.plugin.KotlinCompilation
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
@@ -70,20 +68,17 @@ fun registerKReplicaCodegenTask(
         mainClass.set("io.availe.ApplicationKt")
         dependsOn(kspTaskName)
         finalizedBy(cleanKReplicaStubs)
-        inputs.file(primaryModelJsonProvider)
-            .withPathSensitivity(PathSensitivity.ABSOLUTE)
-            .withPropertyName("primaryModelJson")
         outputs.dir(kotlinPoetOutputDirProvider)
             .withPropertyName("outputDir")
-        argumentProviders.add(object : CommandLineArgumentProvider {
-            override fun asArguments(): Iterable<String> {
-                return listOf(
-                    "--output-dir",
-                    kotlinPoetOutputDirProvider.get().asFile.absolutePath,
-                    primaryModelJsonProvider.get().asFile.absolutePath
-                )
-            }
-        })
+
+        val kreplicaClasspath = project.configurations.getByName("kreplicaClasspath")
+
+        val provider = project.objects.newInstance(CodegenArgumentProvider::class.java).apply {
+            outputDir.set(kotlinPoetOutputDirProvider)
+            primaryModelJson.set(primaryModelJsonProvider)
+            allModelFiles.from(kreplicaClasspath)
+        }
+        argumentProviders.add(provider)
     }
 
     project.extensions.findByType(KotlinMultiplatformExtension::class.java)?.let { kmpExt ->
@@ -93,7 +88,7 @@ fun registerKReplicaCodegenTask(
                     compileTaskProvider.configure {
                         if (name != kspTaskName) {
                             dependsOn(runCodegen)
-                            dependsOn(cleanKReplicaStubs)
+                            mustRunAfter(cleanKReplicaStubs)
                         }
                     }
                 }
@@ -102,7 +97,7 @@ fun registerKReplicaCodegenTask(
     } ?: project.tasks.withType<KotlinCompile>().configureEach {
         if (name == "compileKotlin" && name != kspTaskName) {
             dependsOn(runCodegen)
-            dependsOn(cleanKReplicaStubs)
+            mustRunAfter(cleanKReplicaStubs)
         }
     }
 
