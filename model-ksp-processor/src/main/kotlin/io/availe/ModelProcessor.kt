@@ -18,6 +18,8 @@ import java.io.OutputStreamWriter
 
 class ModelProcessor(private val env: SymbolProcessorEnvironment) : SymbolProcessor {
     private var stubsGenerated = false
+    private val models = mutableListOf<Model>()
+    private val sourceSymbols = mutableListOf<KSClassDeclaration>()
 
     override fun process(resolver: Resolver): List<KSAnnotated> {
         if (stubsGenerated) {
@@ -28,14 +30,12 @@ class ModelProcessor(private val env: SymbolProcessorEnvironment) : SymbolProces
                 .filter(::isNonHiddenModelAnnotation)
                 .toList()
 
-            if (modelSymbols.isNotEmpty()) {
-                val frameworkDecls = getFrameworkDeclarations(resolver)
-                val models = modelSymbols.map { decl ->
-                    buildModel(decl, resolver, frameworkDecls, env)
-                }
-                writeModelsToFile(models, modelSymbols)
+            val frameworkDecls = getFrameworkDeclarations(resolver)
+            val builtModels = modelSymbols.map { decl ->
+                buildModel(decl, resolver, frameworkDecls, env)
             }
-            env.logger.info("--- KREPLICA-KSP: ModelProcessor FINISHED ---")
+            this.models.addAll(builtModels)
+            this.sourceSymbols.addAll(modelSymbols)
             return emptyList()
         }
 
@@ -46,23 +46,24 @@ class ModelProcessor(private val env: SymbolProcessorEnvironment) : SymbolProces
             .filter(::isNonHiddenModelAnnotation)
             .toList()
 
-        if (modelSymbols.isEmpty()) {
+        if (modelSymbols.isNotEmpty()) {
+            generateStubs(modelSymbols, env)
+        } else {
             env.logger.info("--- KREPLICA-KSP: No models found to process. ---")
-            stubsGenerated = true
-            return emptyList()
         }
 
-        generateStubs(modelSymbols, env)
-
         stubsGenerated = true
-
         return modelSymbols
     }
 
+    override fun finish() {
+        env.logger.info("--- KREPLICA-KSP: Finish hook called. Writing models.json. ---")
+        writeModelsToFile(this.models, this.sourceSymbols)
+    }
+
     private fun writeModelsToFile(models: List<Model>, sourceSymbols: List<KSClassDeclaration>) {
-        if (models.isEmpty()) return
         val jsonText = Json { prettyPrint = true }.encodeToString(models)
-        val sourceFiles = sourceSymbols.mapNotNull { it.containingFile }.toTypedArray()
+        val sourceFiles = sourceSymbols.mapNotNull { it.containingFile }.distinct().toTypedArray()
         val dependencies = Dependencies(true, *sourceFiles)
         val fileName = KReplicaPaths.MODELS_JSON_FILE
         val extension = fileName.substringAfterLast('.', "")
