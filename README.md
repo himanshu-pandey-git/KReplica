@@ -53,6 +53,11 @@ private interface UserAccount {
 }
 ```
 
+See the [generated code](docs/EXAMPLES.md#example-non-versioned).
+
+See the [patchable file](docs/EXAMPLES.md#patchable)
+
+
 ## Example (versioned)
 
 To version a `Replicate.Model` declaration, create a base interface (e.g. `UserAccount`) and extend it with V\<number\>
@@ -73,6 +78,8 @@ private interface V2 : UserAccount {
 }
 ```
 
+See the [generated code](docs/EXAMPLES.md#example-versioned)
+
 If you wish to not follow the V\<number\> naming convention, you must use the `Replicate.SchemaVersion` annotation to
 manually
 specify a version number.
@@ -88,6 +95,8 @@ private interface NewAccount : UserAccount {
 }
 ```
 
+See the [generated code](docs/EXAMPLES.md#example-versioned-w-schema-version-annotation)
+
 Note all versioned declarations automatically inject a `schema_version` property into the generated DTOs.
 
 ## Example (serializable)
@@ -102,6 +111,8 @@ private interface UserAccount {
     val id: Int
 }
 ```
+
+See the [generated code](docs/EXAMPLES.md#example-serializable)
 
 Note that `Replicate.Apply` can also take include/exclude arguments, if you want an annotation to only be
 applied to a
@@ -134,6 +145,8 @@ private interface UserAccount {
     val id: Int
 }
 ```
+
+See the [generated code](docs/EXAMPLES.md#directly-applying-annotations)
 
 ## The hide annotation
 
@@ -178,6 +191,8 @@ private interface AdminAccount {
 }
 ```
 
+See the [generated code](docs/EXAMPLES.md#contextual-nested-model-versioned)
+
 Or if `UserAccount` was a non-versioned schema:
 
 ```kotlin
@@ -187,9 +202,11 @@ private interface AdminAccount {
 }
 ```
 
+See the [generated code](docs/EXAMPLES.md#contextual-nested-model-non-versioned)
+
 ## FAQ
 
-### Can a field have a broader replication than its parent @ModelGen?
+### Can a `Replication.Property` have a broader replication than its `Replication.Model`?
 
 No. The replication of all children must be a subset of the parent (⊆), including for nested models. Otherwise, KReplica
 will error and log the offending fields.
@@ -200,7 +217,7 @@ get an immediate build-time error.
 
 No. KReplica actually cleans the build folder at the start of each run (which ensures no stale data). To ensure that
 nested contextuals work, KReplica uses two-pass compilation. Prior to the main compilation, stub files of all
-`Replicate.Model` declarations, which can be referenced (and overwritten) during the main compilation phase.
+`Replicate.Model` declarations, which is then deleted to avoid a redeclaration error.
 
 ### Why do all the examples use the private keyword (private interface)?
 
