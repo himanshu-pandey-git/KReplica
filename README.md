@@ -30,6 +30,7 @@ plugins {
 This example covers how to use the `Replicate.Model` and `Replicate.Property` annotations.
 
 ```kotlin
+@OptIn(ExperimentalUuidApi::class)
 @Replicate.Model(
     variants = [Variant.BASE, Variant.CREATE, Variant.PATCH], // required argument
     nominalTyping = NominalTyping.ENABLED // disabled by default
@@ -40,7 +41,7 @@ private interface UserAccount {
 
     // This property is only included in the BASE variant
     @Replicate.Property(include = [Variant.BASE])
-    val id: UUID
+    val id: Uuid
 
     // This property is excluded from the CREATE variant
     @Replicate.Property(exclude = [Variant.CREATE])
