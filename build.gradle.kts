@@ -43,26 +43,3 @@ publishing {
         mavenLocal()
     }
 }
-
-private fun isVanniktech(t: Task) =
-    t::class.java.name.startsWith("com.vanniktech.maven.publish")
-
-tasks.register("publishViaVanniktech") {
-    group = "publishing"
-    dependsOn(subprojects.flatMap { p ->
-        p.tasks.withType<Sign>().matching(::isVanniktech)
-    })
-    dependsOn(subprojects.flatMap { p ->
-        p.tasks.withType<AbstractPublishToMaven>().matching(::isVanniktech)
-    })
-}
-
-tasks.register("publishViaManual") {
-    group = "publishing"
-    dependsOn(subprojects.flatMap { p ->
-        p.tasks.withType<AbstractPublishToMaven>()
-            .matching {
-                it.name.endsWith("PublicationToMavenLocal")
-            }
-    })
-}
