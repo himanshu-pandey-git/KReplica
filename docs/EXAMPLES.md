@@ -1,6 +1,6 @@
 # Examples
 
-These are what's generated from the examples provided in the README.md file.
+Here is the generated code to the examples in [README.md](../README.md).
 
 ## Example (non-versioned)
 

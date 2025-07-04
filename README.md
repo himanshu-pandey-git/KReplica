@@ -25,6 +25,7 @@ plugins {
 }
 ```
 
+**Note:** 90% of KReplica's functionality is covered by the first two examples: namely `Replicate.Model` and `Replicate.Property` (example 1), and versioned schemas (example 2).
 ## Example (non-versioned)
 
 This example covers how to use the `Replicate.Model` and `Replicate.Property` annotations.
@@ -32,24 +33,24 @@ This example covers how to use the `Replicate.Model` and `Replicate.Property` an
 ```kotlin
 @OptIn(ExperimentalUuidApi::class)
 @Replicate.Model(
-    variants = [Variant.BASE, Variant.CREATE, Variant.PATCH], // required argument
-    nominalTyping = NominalTyping.ENABLED // disabled by default
+  variants = [DtoVariant.BASE, DtoVariant.CREATE, DtoVariant.PATCH], // required argument
+  nominalTyping = NominalTyping.ENABLED // disabled by default
 )
 private interface UserAccount {
-    // This property inherits all of @Replicate.Model's arguments
-    val emailAddress: String
+  // This property inherits all of @Replicate.Model's arguments
+  val emailAddress: String
 
-    // This property is only included in the BASE variant
-    @Replicate.Property(include = [Variant.BASE])
-    val id: Uuid
+  // This property is only included in the BASE variant
+  @Replicate.Property(include = [DtoVariant.BASE])
+  val id: Uuid
 
-    // This property is excluded from the CREATE variant
-    @Replicate.Property(exclude = [Variant.CREATE])
-    val banReason: Patchable<List<String?>>
+  // This property is excluded from the CREATE variant
+  @Replicate.Property(exclude = [DtoVariant.CREATE])
+  val banReason: Patchable<List<String?>>
 
-    // We opt out of nominalTyping for this property
-    @Replicate.Property(nominalTyping = NominalTyping.DISABLED)
-    val userDescription: String?
+  // We opt out of nominalTyping for this property
+  @Replicate.Property(nominalTyping = NominalTyping.DISABLED)
+  val userDescription: String?
 }
 ```
 
@@ -66,12 +67,12 @@ interfaces (e.g. `V1`, `V2`) to track model changes.
 ```kotlin
 private interface UserAccount
 
-@Replicate.Model(variants = [Variant.BASE])
+@Replicate.Model(variants = [DtoVariant.BASE])
 private interface V1 : UserAccount {
     val id: Int
 }
 
-@Replicate.Model(variants = [Variant.BASE, Variant.PATCH])
+@Replicate.Model(variants = [DtoVariant.BASE, DtoVariant.PATCH])
 private interface V2 : UserAccount {
     val id: Int
     val name: String
@@ -87,7 +88,7 @@ specify a version number.
 ```kotlin
 private interface UserAccount
 
-@Replicate.Model(variants = [Variant.BASE, Variant.PATCH])
+@Replicate.Model(variants = [DtoVariant.BASE, DtoVariant.PATCH])
 @Replicate.SchemaVersion(1)
 private interface NewAccount : UserAccount {
     val id: Int
@@ -105,7 +106,7 @@ Interfaces cannot directly implement some annotations, including `Serializable`.
 `Replicate.Apply`.
 
 ```kotlin
-@Replicate.Model(variants = [Variant.BASE, Variant.PATCH])
+@Replicate.Model(variants = [DtoVariant.BASE, DtoVariant.PATCH])
 @Replicate.Apply(annotations = [Serializable::class])
 private interface UserAccount {
     val id: Int
@@ -138,7 +139,7 @@ If the annotation can be applied on interfaces, you can directly use it without 
 example:
 
 ```kotlin
-@Replicate.Model(variants = [Variant.BASE])
+@Replicate.Model(variants = [DtoVariant.BASE])
 @Deprecated("Use NewUserAccount instead")
 private interface UserAccount {
     @Deprecated("Use newId instead")
@@ -155,7 +156,7 @@ testing how
 code removal affects the system—but use it as you see fit.
 
 ```kotlin
-@Replicate.Model(variants = [Variant.BASE])
+@Replicate.Model(variants = [DtoVariant.BASE])
 @Replicate.Hide
 private interface UserAccount {
     val id: Int
@@ -169,7 +170,7 @@ Say that you previously defined `UserAccount`:
 ```kotlin
 private interface UserAccount
 
-@Replicate.Model(variants = [Variant.BASE, Variant.CREATE, Variant.PATCH], nominalTyping = NominalTyping.ENABLED)
+@Replicate.Model(variants = [DtoVariant.BASE, DtoVariant.CREATE, DtoVariant.PATCH], nominalTyping = NominalTyping.ENABLED)
 private interface V1 : UserAccount {
     val id: Int
 }
@@ -185,7 +186,7 @@ You could use the `Replicate.Property` annotation to manually configure each fie
 contextual nested models:
 
 ```kotlin
-@Replicate.Model(variants = [Variant.BASE, Variant.CREATE, Variant.PATCH])
+@Replicate.Model(variants = [DtoVariant.BASE, DtoVariant.CREATE, DtoVariant.PATCH])
 private interface AdminAccount {
     val user: UserAccountSchema.V1
 }
@@ -196,7 +197,7 @@ See the [generated code](docs/EXAMPLES.md#contextual-nested-model-versioned)
 Or if `UserAccount` was a non-versioned schema:
 
 ```kotlin
-@Replicate.Model(variants = [Variant.BASE, Variant.CREATE, Variant.PATCH])
+@Replicate.Model(variants = [DtoVariant.BASE, DtoVariant.CREATE, DtoVariant.PATCH])
 private interface AdminAccount {
     val user: UserAccountSchema
 }
@@ -213,7 +214,7 @@ will error and log the offending fields.
 This rule ensures fail-fast feedback. If you restrict a parent’s replication but forget to update a child field, you’ll
 get an immediate build-time error.
 
-### If a @Replicate.Model has another @Replicate.Model as a field, does the order of compilation matter?
+### If a `Replicate.Model` has another `Replicate.Model` as a field, does the order of compilation matter?
 
 No. KReplica actually cleans the build folder at the start of each run (which ensures no stale data). To ensure that
 nested contextuals work, KReplica uses two-pass compilation. Prior to the main compilation, stub files of all
