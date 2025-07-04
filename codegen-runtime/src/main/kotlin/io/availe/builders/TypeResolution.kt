@@ -17,14 +17,14 @@ internal fun propertyShouldSkipWrapping(property: Property, existingValueClasses
 
 internal fun resolveTypeNameForProperty(
     property: Property,
-    variant: Variant,
+    dtoVariant: DtoVariant,
     model: Model,
     valueClassNames: Map<Pair<String, String>, String>,
     existingValueClasses: Set<String>,
     modelsByName: Map<String, Model>,
     isContainerSerializable: Boolean
 ): TypeName {
-    val patchableClassName = if (model.isSerializable(variant)) {
+    val patchableClassName = if (model.isSerializable(dtoVariant)) {
         ClassName("io.availe.models", SERIALIZABLE_PATCHABLE_CLASS_NAME)
     } else {
         ClassName("io.availe.models", "Patchable")
@@ -40,11 +40,11 @@ internal fun resolveTypeNameForProperty(
             .build()
 
         val annotatedType = baseType.copy(annotations = baseType.annotations + serializableAnnotation)
-        return if (variant == Variant.PATCH) patchableClassName.parameterizedBy(annotatedType) else annotatedType
+        return if (dtoVariant == DtoVariant.PATCH) patchableClassName.parameterizedBy(annotatedType) else annotatedType
     }
 
     val baseType = if (property is ForeignProperty) {
-        buildRecursiveDtoTypeName(property.typeInfo, variant, modelsByName, isContainerSerializable)
+        buildRecursiveDtoTypeName(property.typeInfo, dtoVariant, modelsByName, isContainerSerializable)
     } else {
         val useWrapping = property.nominalTyping == "ENABLED"
         val skipWrapping = propertyShouldSkipWrapping(property, existingValueClasses)
@@ -57,7 +57,7 @@ internal fun resolveTypeNameForProperty(
         }
     }
 
-    if (variant == Variant.PATCH) {
+    if (dtoVariant == DtoVariant.PATCH) {
         return patchableClassName.parameterizedBy(baseType)
     }
 
@@ -75,7 +75,7 @@ private fun buildSimpleTypeName(typeInfo: TypeInfo): TypeName {
 
 internal fun buildRecursiveDtoTypeName(
     typeInfo: TypeInfo,
-    variant: Variant,
+    dtoVariant: DtoVariant,
     modelsByName: Map<String, Model>,
     isCurrentContainerSerializable: Boolean
 ): TypeName {
@@ -89,17 +89,17 @@ internal fun buildRecursiveDtoTypeName(
         }
 
         val finalDtoName = if (targetModel.isVersionOf != null) {
-            ClassName(targetModel.packageName, "${targetModel.isVersionOf}Schema", targetModel.name, variant.suffix)
+            ClassName(targetModel.packageName, "${targetModel.isVersionOf}Schema", targetModel.name, dtoVariant.suffix)
         } else {
-            ClassName(targetModel.packageName, "${targetModel.name}Schema", variant.suffix)
+            ClassName(targetModel.packageName, "${targetModel.name}Schema", dtoVariant.suffix)
         }
         return finalDtoName.copy(nullable = typeInfo.isNullable)
     } else {
         val rawType = typeInfo.qualifiedName.asClassName()
         val transformedArgs = typeInfo.arguments.map { arg ->
             val isNestedContainerSerializable =
-                modelsByName[arg.qualifiedName]?.isSerializable(variant) ?: isCurrentContainerSerializable
-            buildRecursiveDtoTypeName(arg, variant, modelsByName, isNestedContainerSerializable)
+                modelsByName[arg.qualifiedName]?.isSerializable(dtoVariant) ?: isCurrentContainerSerializable
+            buildRecursiveDtoTypeName(arg, dtoVariant, modelsByName, isNestedContainerSerializable)
         }
         return rawType.parameterizedBy(transformedArgs).copy(nullable = typeInfo.isNullable)
     }

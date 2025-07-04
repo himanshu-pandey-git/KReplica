@@ -2,19 +2,19 @@ package io.availe.builders
 
 import com.squareup.kotlinpoet.*
 import io.availe.*
+import io.availe.models.DtoVariant
 import io.availe.models.Model
 import io.availe.models.Property
 import io.availe.models.RegularProperty
-import io.availe.models.Variant
 
-internal fun Model.isSerializable(variant: Variant): Boolean {
+internal fun Model.isSerializable(dtoVariant: DtoVariant): Boolean {
     return annotationConfigs.any { config ->
-        variant in config.variants && config.annotation.qualifiedName == SERIALIZABLE_QUALIFIED_NAME
+        dtoVariant in config.variants && config.annotation.qualifiedName == SERIALIZABLE_QUALIFIED_NAME
     }
 }
 
-private fun getPatchableClassName(model: Model, variant: Variant): ClassName {
-    return if (model.isSerializable(variant)) {
+private fun getPatchableClassName(model: Model, dtoVariant: DtoVariant): ClassName {
+    return if (model.isSerializable(dtoVariant)) {
         ClassName(MODELS_PACKAGE_NAME, SERIALIZABLE_PATCHABLE_CLASS_NAME)
     } else {
         ClassName(MODELS_PACKAGE_NAME, PATCHABLE_CLASS_NAME)
@@ -24,13 +24,13 @@ private fun getPatchableClassName(model: Model, variant: Variant): ClassName {
 fun buildDataTransferObjectClass(
     model: Model,
     properties: List<Property>,
-    variant: Variant,
+    dtoVariant: DtoVariant,
     valueClassNames: Map<Pair<String, String>, String>,
     existingValueClasses: Set<String>,
     modelsByName: Map<String, Model>,
     coreInterfaceSpec: TypeSpec?
 ): TypeSpec {
-    val generatedClassName = variant.suffix
+    val generatedClassName = dtoVariant.suffix
 
     val typeSpecBuilder = TypeSpec.classBuilder(generatedClassName).addModifiers(KModifier.DATA)
 
@@ -38,7 +38,7 @@ fun buildDataTransferObjectClass(
         typeSpecBuilder.addAnnotation(buildAnnotationSpec(annotationModel))
     }
 
-    model.annotationConfigs.filter { variant in it.variants }.forEach { config ->
+    model.annotationConfigs.filter { dtoVariant in it.variants }.forEach { config ->
         typeSpecBuilder.addAnnotation(buildAnnotationSpec(config.annotation))
     }
 
@@ -48,17 +48,17 @@ fun buildDataTransferObjectClass(
         val versionInterface = ClassName(model.packageName, schemaName, model.name)
         typeSpecBuilder.addSuperinterface(versionInterface)
 
-        val variantKindInterface = ClassName(model.packageName, schemaName, "${variant.suffix}Variant")
+        val variantKindInterface = ClassName(model.packageName, schemaName, "${dtoVariant.suffix}Variant")
         typeSpecBuilder.addSuperinterface(variantKindInterface)
     }
 
     val constructorBuilder = FunSpec.constructorBuilder()
-    val isSerializable = model.isSerializable(variant)
+    val isSerializable = model.isSerializable(dtoVariant)
     properties.forEach { property ->
         val typeName =
             resolveTypeNameForProperty(
                 property,
-                variant,
+                dtoVariant,
                 model,
                 valueClassNames,
                 existingValueClasses,
@@ -74,7 +74,7 @@ fun buildDataTransferObjectClass(
                 !propertyShouldSkipWrapping(property, existingValueClasses) &&
                 property is RegularProperty)
 
-        val shouldFilterContextual = (variant == Variant.PATCH) || isWrappedInValueClass
+        val shouldFilterContextual = (dtoVariant == DtoVariant.PATCH) || isWrappedInValueClass
 
         if (shouldFilterContextual) {
             annotationsToApply =
@@ -87,7 +87,7 @@ fun buildDataTransferObjectClass(
             paramBuilder.addAnnotation(buildAnnotationSpec(annotationModel))
         }
 
-        if (property.name == SCHEMA_VERSION_PROPERTY_NAME && variant != Variant.PATCH) {
+        if (property.name == SCHEMA_VERSION_PROPERTY_NAME && dtoVariant != DtoVariant.PATCH) {
             val isWrapped = (property.nominalTyping == "ENABLED" &&
                     !propertyShouldSkipWrapping(property, existingValueClasses) &&
                     property is RegularProperty)
@@ -99,8 +99,8 @@ fun buildDataTransferObjectClass(
             }
         }
 
-        if (variant == Variant.PATCH) {
-            val patchableClassName = getPatchableClassName(model, variant)
+        if (dtoVariant == DtoVariant.PATCH) {
+            val patchableClassName = getPatchableClassName(model, dtoVariant)
             paramBuilder.defaultValue(
                 "%T.%L",
                 patchableClassName,

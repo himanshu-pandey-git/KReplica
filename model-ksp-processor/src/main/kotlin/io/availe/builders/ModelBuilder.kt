@@ -11,7 +11,7 @@ import io.availe.models.*
 
 private fun parseApplyAnnotations(
     declaration: KSClassDeclaration,
-    masterVariants: Set<Variant>,
+    masterDtoVariants: Set<DtoVariant>,
     environment: SymbolProcessorEnvironment
 ): List<AnnotationConfigModel> {
     val applyAnnotations = declaration.annotations.filter {
@@ -20,23 +20,23 @@ private fun parseApplyAnnotations(
 
     return applyAnnotations.flatMap { annotation ->
         val includeArg = (annotation.arguments.first { it.name?.asString() == "include" }.value as List<*>)
-            .map { Variant.valueOf((it as KSDeclaration).simpleName.asString()) }.toSet()
+            .map { DtoVariant.valueOf((it as KSDeclaration).simpleName.asString()) }.toSet()
         val excludeArg = (annotation.arguments.first { it.name?.asString() == "exclude" }.value as List<*>)
-            .map { Variant.valueOf((it as KSDeclaration).simpleName.asString()) }.toSet()
+            .map { DtoVariant.valueOf((it as KSDeclaration).simpleName.asString()) }.toSet()
         val annotationsToApply = annotation.arguments.first { it.name?.asString() == "annotations" }.value as List<*>
 
         val allTargetedVariants = includeArg + excludeArg
-        val unknownVariants = allTargetedVariants - masterVariants
+        val unknownVariants = allTargetedVariants - masterDtoVariants
         if (unknownVariants.isNotEmpty()) {
             fail(
                 environment,
                 "KReplica Validation Error in '${declaration.simpleName.asString()}': " +
                         "@ApplyAnnotations targets unknown variants: ${unknownVariants.joinToString()}. " +
-                        "Allowed variants are: [${masterVariants.joinToString()}]."
+                        "Allowed variants are: [${masterDtoVariants.joinToString()}]."
             )
         }
 
-        val initialSet = if (includeArg.isNotEmpty()) includeArg else masterVariants
+        val initialSet = if (includeArg.isNotEmpty()) includeArg else masterDtoVariants
         val finalVariants = initialSet - excludeArg
 
         annotationsToApply.map { annotationToApplyType ->
@@ -58,7 +58,7 @@ internal fun buildModel(
     val modelAnnotation = declaration.annotations.first { it.isAnnotation(MODEL_ANNOTATION_NAME) }
 
     val modelVariantsArgument = modelAnnotation.arguments.find { it.name?.asString() == "variants" }
-    val modelVariants = if (modelVariantsArgument == null) {
+    val modelDtoVariants = if (modelVariantsArgument == null) {
         fail(
             environment,
             "KReplica Error: The 'variants' argument is mandatory on @Replicate.Model for model '${declaration.simpleName.asString()}'. " +
@@ -66,7 +66,7 @@ internal fun buildModel(
         )
     } else {
         (modelVariantsArgument.value as List<*>).map {
-            Variant.valueOf((it as KSDeclaration).simpleName.asString())
+            DtoVariant.valueOf((it as KSDeclaration).simpleName.asString())
         }.toSet()
     }
 
@@ -83,19 +83,19 @@ internal fun buildModel(
         )
     }
 
-    val annotationConfigs = parseApplyAnnotations(declaration, modelVariants, environment)
+    val annotationConfigs = parseApplyAnnotations(declaration, modelDtoVariants, environment)
     val modelAnnotations = declaration.annotations.toAnnotationModels(frameworkDeclarations)
 
     val versioningInfo = determineVersioningInfo(declaration, environment)
     val properties = declaration.getAllProperties().map { property ->
-        processProperty(property, modelVariants, modelNominalTyping, resolver, frameworkDeclarations, environment)
+        processProperty(property, modelDtoVariants, modelNominalTyping, resolver, frameworkDeclarations, environment)
     }.toMutableList()
 
     if (versioningInfo != null && properties.none { it.name == SCHEMA_VERSION_FIELD }) {
         val schemaVersionProperty = RegularProperty(
             name = SCHEMA_VERSION_FIELD,
             typeInfo = TypeInfo("kotlin.Int", isNullable = false),
-            variants = modelVariants,
+            dtoVariants = modelDtoVariants,
             annotations = null,
             nominalTyping = modelNominalTyping
         )
@@ -108,7 +108,7 @@ internal fun buildModel(
         name = declaration.simpleName.asString(),
         packageName = declaration.packageName.asString(),
         properties = properties,
-        variants = modelVariants,
+        dtoVariants = modelDtoVariants,
         annotationConfigs = annotationConfigs,
         annotations = modelAnnotations,
         optInMarkers = allOptInMarkers,

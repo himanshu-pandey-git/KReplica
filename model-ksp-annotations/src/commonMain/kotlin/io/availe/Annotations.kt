@@ -1,6 +1,6 @@
 package io.availe
 
-import io.availe.models.Variant
+import io.availe.models.DtoVariant
 import kotlin.reflect.KClass
 
 enum class NominalTyping {
@@ -12,14 +12,14 @@ enum class NominalTyping {
 object Replicate {
     @Target(AnnotationTarget.CLASS)
     annotation class Model(
-        val variants: Array<Variant>,
+        val variants: Array<DtoVariant>,
         val nominalTyping: NominalTyping = NominalTyping.DISABLED
     )
 
     @Target(AnnotationTarget.PROPERTY)
     annotation class Property(
-        val exclude: Array<Variant> = [],
-        val include: Array<Variant> = [],
+        val exclude: Array<DtoVariant> = [],
+        val include: Array<DtoVariant> = [],
         val nominalTyping: NominalTyping = NominalTyping.INHERIT
     )
 
@@ -27,8 +27,8 @@ object Replicate {
     @Target(AnnotationTarget.CLASS)
     annotation class Apply(
         val annotations: Array<KClass<out Annotation>>,
-        val include: Array<Variant> = [],
-        val exclude: Array<Variant> = []
+        val include: Array<DtoVariant> = [],
+        val exclude: Array<DtoVariant> = []
     )
 
     @Target(AnnotationTarget.PROPERTY)

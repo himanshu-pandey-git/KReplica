@@ -57,7 +57,7 @@ private fun generateSchemaFile(
             }
             .addKdoc(TOP_LEVEL_CLASS_KDOC, baseName)
 
-        val allVariants = versions.flatMap { it.variants }.toSet()
+        val allVariants = versions.flatMap { it.dtoVariants }.toSet()
         allVariants.forEach { variant ->
             val interfaceName = "${variant.suffix}Variant"
             val variantInterfaceSpec = TypeSpec.interfaceBuilder(interfaceName)
@@ -131,13 +131,13 @@ private fun generateDataTransferObjects(
     existingValueClasses: Set<String>,
     modelsByName: Map<String, Model>
 ): List<TypeSpec> {
-    return model.variants.mapNotNull { variant ->
+    return model.dtoVariants.mapNotNull { variant ->
         val fields = fieldsFor(model, variant)
         if (fields.isNotEmpty()) {
             buildDataTransferObjectClass(
                 model = model,
                 properties = fields,
-                variant = variant,
+                dtoVariant = variant,
                 valueClassNames = valueClassNames,
                 existingValueClasses = existingValueClasses,
                 modelsByName = modelsByName,

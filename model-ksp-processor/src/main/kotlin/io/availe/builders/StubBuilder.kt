@@ -9,7 +9,7 @@ import com.google.devtools.ksp.symbol.Modifier
 import com.squareup.kotlinpoet.*
 import com.squareup.kotlinpoet.ksp.writeTo
 import io.availe.helpers.*
-import io.availe.models.Variant
+import io.availe.models.DtoVariant
 
 internal fun generateStubs(declarations: List<KSClassDeclaration>, env: SymbolProcessorEnvironment) {
     if (declarations.isEmpty()) return
@@ -110,13 +110,13 @@ private fun createStubFileFor(baseName: String, versions: List<KSClassDeclaratio
 }
 
 
-private fun getVariantsFromAnnotation(declaration: KSClassDeclaration): List<Variant> {
+private fun getVariantsFromAnnotation(declaration: KSClassDeclaration): List<DtoVariant> {
     val modelAnnotation = declaration.annotations.first { it.isAnnotation(MODEL_ANNOTATION_NAME) }
     val variantsArgument = modelAnnotation.arguments.find { it.name?.asString() == "variants" }
 
     return (variantsArgument?.value as? List<*>)
         ?.mapNotNull { (it as? KSDeclaration)?.simpleName?.asString() }
-        ?.map { Variant.valueOf(it) }
+        ?.map { DtoVariant.valueOf(it) }
         ?: emptyList()
 }
 

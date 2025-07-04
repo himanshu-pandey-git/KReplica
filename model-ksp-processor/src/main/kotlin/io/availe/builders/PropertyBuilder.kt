@@ -14,12 +14,12 @@ private fun isGeneratedVariantContainer(declaration: KSClassDeclaration?): Boole
         .filterIsInstance<KSClassDeclaration>()
         .map { it.simpleName.asString() }
         .toSet()
-    return Variant.entries.all { it.suffix in nestedDecls }
+    return DtoVariant.entries.all { it.suffix in nestedDecls }
 }
 
 internal fun processProperty(
     propertyDeclaration: KSPropertyDeclaration,
-    modelVariants: Set<Variant>,
+    modelDtoVariants: Set<DtoVariant>,
     modelNominalTyping: String?,
     resolver: Resolver,
     frameworkDeclarations: Set<KSClassDeclaration>,
@@ -42,18 +42,18 @@ internal fun processProperty(
         propertyDeclaration.annotations.firstOrNull { it.isAnnotation(REPLICATE_PROPERTY_ANNOTATION_NAME) }
 
     val propertyVariants = if (fieldAnnotation == null) {
-        modelVariants
+        modelDtoVariants
     } else {
         val includeArg = fieldAnnotation.arguments.find { it.name?.asString() == "include" }?.value as? List<*>
         val excludeArg = fieldAnnotation.arguments.find { it.name?.asString() == "exclude" }?.value as? List<*>
 
-        val include = includeArg?.map { Variant.valueOf(it.toString().substringAfterLast('.')) }?.toSet() ?: emptySet()
-        val exclude = excludeArg?.map { Variant.valueOf(it.toString().substringAfterLast('.')) }?.toSet() ?: emptySet()
+        val include = includeArg?.map { DtoVariant.valueOf(it.toString().substringAfterLast('.')) }?.toSet() ?: emptySet()
+        val exclude = excludeArg?.map { DtoVariant.valueOf(it.toString().substringAfterLast('.')) }?.toSet() ?: emptySet()
 
         when {
             include.isNotEmpty() -> include
-            exclude.isNotEmpty() -> modelVariants - exclude
-            else -> modelVariants
+            exclude.isNotEmpty() -> modelDtoVariants - exclude
+            else -> modelDtoVariants
         }
     }
 
@@ -104,7 +104,7 @@ internal fun processProperty(
         RegularProperty(
             name = propertyDeclaration.simpleName.asString(),
             typeInfo = typeInfo,
-            variants = propertyVariants,
+            dtoVariants = propertyVariants,
             annotations = propertyAnnotations,
             nominalTyping = finalNominalTyping
         )
@@ -115,7 +115,7 @@ private fun createForeignProperty(
     propertyDeclaration: KSPropertyDeclaration,
     typeInformation: TypeInfo,
     foreignModelDeclaration: KSClassDeclaration,
-    variants: Set<Variant>,
+    dtoVariants: Set<DtoVariant>,
     annotations: List<AnnotationModel>?,
     nominalTyping: String?
 ): ForeignProperty {
@@ -129,7 +129,7 @@ private fun createForeignProperty(
         name = propertyDeclaration.simpleName.asString(),
         typeInfo = typeInformation,
         foreignModelName = foreignModelNameForLookup,
-        variants = variants,
+        dtoVariants = dtoVariants,
         annotations = annotations,
         nominalTyping = nominalTyping
     )

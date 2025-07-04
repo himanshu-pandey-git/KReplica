@@ -6,7 +6,7 @@ import kotlinx.serialization.Serializable
 enum class Replication { NONE, PATCH, CREATE, BOTH }
 
 @Serializable
-enum class Variant(val suffix: String) {
+enum class DtoVariant(val suffix: String) {
     BASE("Data"),
     CREATE("CreateRequest"),
     PATCH("PatchRequest")

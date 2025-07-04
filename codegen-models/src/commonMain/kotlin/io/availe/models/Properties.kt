@@ -6,7 +6,7 @@ import kotlinx.serialization.Serializable
 sealed class Property {
     abstract val name: String
     abstract val typeInfo: TypeInfo
-    abstract val variants: Set<Variant>
+    abstract val dtoVariants: Set<DtoVariant>
     abstract val annotations: List<AnnotationModel>?
     abstract val nominalTyping: String?
 }
@@ -15,7 +15,7 @@ sealed class Property {
 data class RegularProperty(
     override val name: String,
     override val typeInfo: TypeInfo,
-    override val variants: Set<Variant>,
+    override val dtoVariants: Set<DtoVariant>,
     override val annotations: List<AnnotationModel>? = null,
     override val nominalTyping: String? = null
 ) : Property()
@@ -25,7 +25,7 @@ data class ForeignProperty(
     override val name: String,
     override val typeInfo: TypeInfo,
     val foreignModelName: String,
-    override val variants: Set<Variant>,
+    override val dtoVariants: Set<DtoVariant>,
     override val annotations: List<AnnotationModel>? = null,
     override val nominalTyping: String? = null
 ) : Property()
