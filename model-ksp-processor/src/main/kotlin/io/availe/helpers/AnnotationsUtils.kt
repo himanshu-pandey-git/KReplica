@@ -77,6 +77,7 @@ private fun ksAnnotationToModel(
 ): AnnotationModel? {
     val declaration = annotation.annotationType.resolve().declaration as? KSClassDeclaration ?: return null
     if (declaration in frameworkDeclarations) return null
+    if (declaration.qualifiedName?.asString() == OPT_IN_ANNOTATION_NAME) return null
 
     val arguments = annotation.arguments.mapNotNull { argument ->
         val key = argument.name?.asString() ?: "value"
