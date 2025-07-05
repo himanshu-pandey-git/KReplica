@@ -5,7 +5,7 @@ KReplica is a DTO generator for KMM and Kotlin JVM. It runs automatically during
 ### Features:
 
 * **Variant generation:** From a single interface, specify up to three variants to generate:
-    * `BASE`: For read-only data representation
+    * `DATA`: For read-only data representation
     * `CREATE`: For object creation requests
     * `PATCH`: For update requests, wraps properties in a `Patchable` type.
 * **Granular control:** Enable or disable specific features or variants at both the model and property levels.
@@ -21,7 +21,7 @@ Add the KSP and KReplica plugins to your module's `build.gradle.kts`:
 ```kotlin
 plugins {
     id("com.google.devtools.ksp") version "2.1.21-2.0.1" // Use a KSP version that matches your Kotlin version
-    id("io.availe.kreplica") version "1.0.0"
+    id("io.availe.kreplica") version "2.0.0"
 }
 ```
 
@@ -66,7 +66,7 @@ fun handleUser(user: UserAccountSchema.V2) {
 }
 ```
 
-**Example: Exhaustively handle only a specific kind of variant (e.g., all base variants)**
+**Example: Exhaustively handle only a specific kind of variant (e.g., all data variants)**
 
 ```kotlin
 fun handleUser(user: UserAccountSchema.DataVariant) {
@@ -100,15 +100,15 @@ This example covers how to use the `Replicate.Model` and `Replicate.Property` an
 ```kotlin
 @OptIn(ExperimentalUuidApi::class)
 @Replicate.Model(
-  variants = [DtoVariant.BASE, DtoVariant.CREATE, DtoVariant.PATCH], // required argument
+  variants = [DtoVariant.DATA, DtoVariant.CREATE, DtoVariant.PATCH], // required argument
   nominalTyping = NominalTyping.ENABLED // disabled by default
 )
 private interface UserAccount {
   // This property inherits all of @Replicate.Model's arguments
   val emailAddress: String
 
-  // This property is only included in the BASE variant
-  @Replicate.Property(include = [DtoVariant.BASE])
+  // This property is only included in the DATA variant
+  @Replicate.Property(include = [DtoVariant.DATA])
   val id: Uuid
 
   // This property is excluded from the CREATE variant
@@ -134,12 +134,12 @@ interfaces (e.g. `V1`, `V2`) to track model changes.
 ```kotlin
 private interface UserAccount
 
-@Replicate.Model(variants = [DtoVariant.BASE])
+@Replicate.Model(variants = [DtoVariant.DATA])
 private interface V1 : UserAccount {
     val id: Int
 }
 
-@Replicate.Model(variants = [DtoVariant.BASE, DtoVariant.PATCH])
+@Replicate.Model(variants = [DtoVariant.DATA, DtoVariant.PATCH])
 private interface V2 : UserAccount {
     val id: Int
     val name: String
@@ -155,7 +155,7 @@ specify a version number.
 ```kotlin
 private interface UserAccount
 
-@Replicate.Model(variants = [DtoVariant.BASE, DtoVariant.PATCH])
+@Replicate.Model(variants = [DtoVariant.DATA, DtoVariant.PATCH])
 @Replicate.SchemaVersion(1)
 private interface NewAccount : UserAccount {
     val id: Int
@@ -173,7 +173,7 @@ Interfaces cannot directly implement some annotations, including `Serializable`.
 `Replicate.Apply`.
 
 ```kotlin
-@Replicate.Model(variants = [DtoVariant.BASE, DtoVariant.PATCH])
+@Replicate.Model(variants = [DtoVariant.DATA, DtoVariant.PATCH])
 @Replicate.Apply(annotations = [Serializable::class])
 private interface UserAccount {
     val id: Int
@@ -206,7 +206,7 @@ If the annotation can be applied on interfaces, you can directly use it without 
 example:
 
 ```kotlin
-@Replicate.Model(variants = [DtoVariant.BASE])
+@Replicate.Model(variants = [DtoVariant.DATA])
 @Deprecated("Use NewUserAccount instead")
 private interface UserAccount {
     @Deprecated("Use newId instead")
@@ -223,7 +223,7 @@ testing how
 code removal affects the system—but use it as you see fit.
 
 ```kotlin
-@Replicate.Model(variants = [DtoVariant.BASE])
+@Replicate.Model(variants = [DtoVariant.DATA])
 @Replicate.Hide
 private interface UserAccount {
     val id: Int
@@ -237,7 +237,7 @@ Say that you previously defined `UserAccount`:
 ```kotlin
 private interface UserAccount
 
-@Replicate.Model(variants = [DtoVariant.BASE, DtoVariant.CREATE, DtoVariant.PATCH], nominalTyping = NominalTyping.ENABLED)
+@Replicate.Model(variants = [DtoVariant.DATA, DtoVariant.CREATE, DtoVariant.PATCH], nominalTyping = NominalTyping.ENABLED)
 private interface V1 : UserAccount {
     val id: Int
 }
@@ -245,7 +245,7 @@ private interface V1 : UserAccount {
 
 Now you want `UserAccount` to be included in `AdminAccount`, but in a particular format:
 
-- `AdminAccount` base variant should include `UserAccount` base variant
+- `AdminAccount` DATA variant should include `UserAccount` data variant
 - `AdminAccount` create variant should include `UserAccount` create variant
 - `AdminAccount` patch variant should include `UserAccount` patch variant
 
@@ -253,7 +253,7 @@ You could use the `Replicate.Property` annotation to manually configure each fie
 contextual nested models:
 
 ```kotlin
-@Replicate.Model(variants = [DtoVariant.BASE, DtoVariant.CREATE, DtoVariant.PATCH])
+@Replicate.Model(variants = [DtoVariant.DATA, DtoVariant.CREATE, DtoVariant.PATCH])
 private interface AdminAccount {
     val user: UserAccountSchema.V1
 }
@@ -264,7 +264,7 @@ See the [generated code](docs/EXAMPLES.md#contextual-nested-model-versioned)
 Or if `UserAccount` was a non-versioned schema:
 
 ```kotlin
-@Replicate.Model(variants = [DtoVariant.BASE, DtoVariant.CREATE, DtoVariant.PATCH])
+@Replicate.Model(variants = [DtoVariant.DATA, DtoVariant.CREATE, DtoVariant.PATCH])
 private interface AdminAccount {
     val user: UserAccountSchema
 }
