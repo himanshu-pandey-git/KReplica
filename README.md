@@ -25,6 +25,67 @@ plugins {
 }
 ```
 
+## A quick note on sealed hierarchy
+
+KReplica generates sealed interfaces, allowing you to leverage exhaustive `when` expressions for robust and type-safe code. This makes handling different versions or variants straightforward and ensures you don't miss cases.
+
+In **example 2 (versioned schema)**, if you check the generated code, here is a short snippet of what you will see:
+
+```kotlin
+    public sealed interface V2 : UserAccountSchema {
+        public data class Data(
+            public val id: Int,
+            public val name: String,
+            public val schemaVersion: Int = 2,
+        ) : V2,
+            DataVariant
+```
+
+This code snippet might seem a bit complex for a single DTO, but it's key to the examples below:
+
+**Example: Exhaustively handle all schema versions and variants**
+
+```kotlin
+fun handleUser(user: UserAccountSchema) {
+    when (user) {
+        is UserAccountSchema.V1.Data -> TODO()
+        is UserAccountSchema.V2.Data -> TODO()
+        is UserAccountSchema.V2.PatchRequest -> TODO()
+    }
+}
+```
+
+**Example: Exhaustively handle only a specific schema version**
+
+```kotlin
+fun handleUser(user: UserAccountSchema.V2) {
+    when (user) {
+        is UserAccountSchema.V2.Data -> TODO()
+        is UserAccountSchema.V2.PatchRequest -> TODO()
+    }
+}
+```
+
+**Example: Exhaustively handle only a specific kind of variant (e.g., all base variants)**
+
+```kotlin
+fun handleUser(user: UserAccountSchema.DataVariant) {
+    when (user) {
+        is UserAccountSchema.V1.Data -> TODO()
+        is UserAccountSchema.V2.Data -> TODO()
+    }
+}
+```
+
+**Example: Target only a specific schema version and specific variant**
+
+```kotlin
+fun handleUser(user: UserAccountSchema.V1.Data) {
+    print(user.id)
+}
+```
+
+
 **Note 1:** KReplica generates all output files in your module’s `build/generated-src/kotlin-poet/` directory.
 
 **Note 2:** 90% of what you need to know to utilize KReplica is covered by the first two examples:
