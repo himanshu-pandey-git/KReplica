@@ -25,7 +25,7 @@ plugins {
 }
 ```
 
-## A quick note on sealed hierarchy
+## A quick note on sealed hierarchies
 
 KReplica generates sealed interfaces, allowing you to leverage exhaustive `when` expressions for robust and type-safe code. This makes handling different versions or variants straightforward and ensures you don't miss cases.
 
@@ -85,6 +85,7 @@ fun handleUser(user: UserAccountSchema.V1.Data) {
 }
 ```
 
+## Other addenda
 
 **Note 1:** KReplica generates all output files in your module’s `build/generated-src/kotlin-poet/` directory.
 
