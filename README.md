@@ -25,7 +25,12 @@ plugins {
 }
 ```
 
-**Note:** 90% of KReplica's functionality is covered by the first two examples: namely `Replicate.Model` and `Replicate.Property` (example 1), and versioned schemas (example 2).
+**Note 1:** KReplica generates all output files in your module’s `build/generated-src/kotlin-poet/` directory.
+
+**Note 2:** 90% of what you need to know to utilize KReplica is covered by the first two examples:
+- `Replicate.Model` and `Replicate.Property` (example 1)
+- Versioned schemas (example 2)
+
 ## Example (non-versioned)
 
 This example covers how to use the `Replicate.Model` and `Replicate.Property` annotations.
