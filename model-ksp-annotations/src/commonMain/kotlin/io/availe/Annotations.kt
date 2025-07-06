@@ -13,7 +13,8 @@ object Replicate {
     @Target(AnnotationTarget.CLASS)
     annotation class Model(
         val variants: Array<DtoVariant>,
-        val nominalTyping: NominalTyping = NominalTyping.DISABLED
+        val nominalTyping: NominalTyping = NominalTyping.DISABLED,
+        val autoContextual: Boolean = true
     )
 
     @Target(AnnotationTarget.PROPERTY)

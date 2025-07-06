@@ -83,6 +83,10 @@ internal fun buildModel(
         )
     }
 
+    val modelAutoContextual = modelAnnotation.arguments
+        .find { it.name?.asString() == "autoContextual" }
+        ?.value as? Boolean ?: true
+
     val annotationConfigs = parseApplyAnnotations(declaration, modelDtoVariants, environment)
     val modelAnnotations = declaration.annotations.toAnnotationModels(frameworkDeclarations)
 
@@ -114,6 +118,7 @@ internal fun buildModel(
         optInMarkers = allOptInMarkers,
         isVersionOf = versioningInfo?.baseModelName,
         schemaVersion = versioningInfo?.schemaVersion,
-        nominalTyping = modelNominalTyping
+        nominalTyping = modelNominalTyping,
+        autoContextual = modelAutoContextual
     )
 }

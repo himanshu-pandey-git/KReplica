@@ -241,9 +241,10 @@ private fun generateAndAddValueClasses(
         val isSerializable = triples.any { (_, version, _) ->
             version.annotationConfigs.any { it.annotation.qualifiedName == SERIALIZABLE_QUALIFIED_NAME }
         }
+        val isAutoContextual = triples.any { (_, version, _) -> version.autoContextual }
 
         object {
-            val spec = buildValueClass(className, representativeProperty, isSerializable)
+            val spec = buildValueClass(className, representativeProperty, isSerializable, isAutoContextual)
             val propertyName = representativeProperty.name
         }
     }

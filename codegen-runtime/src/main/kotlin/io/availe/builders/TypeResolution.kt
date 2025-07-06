@@ -51,9 +51,9 @@ internal fun resolveTypeNameForProperty(
         if (useWrapping && !skipWrapping) {
             valueClassNames[model.name to property.name]?.let { vcName ->
                 ClassName(model.packageName, vcName)
-            } ?: buildTypeNameWithContextual(property.typeInfo, isContainerSerializable)
+            } ?: buildTypeNameWithContextual(property.typeInfo, isContainerSerializable, model.autoContextual)
         } else {
-            buildTypeNameWithContextual(property.typeInfo, isContainerSerializable)
+            buildTypeNameWithContextual(property.typeInfo, isContainerSerializable, model.autoContextual)
         }
     }
 
@@ -85,7 +85,7 @@ internal fun buildRecursiveDtoTypeName(
 
     if (typeInfo.arguments.isEmpty()) {
         if (targetModel == null) {
-            return buildTypeNameWithContextual(typeInfo, isCurrentContainerSerializable)
+            return buildTypeNameWithContextual(typeInfo, isCurrentContainerSerializable, true)
         }
 
         val finalDtoName = if (targetModel.isVersionOf != null) {

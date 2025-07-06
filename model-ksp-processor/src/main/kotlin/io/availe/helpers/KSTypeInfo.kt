@@ -43,7 +43,7 @@ data class KSTypeInfo(
             val nullable = ksType.isMarkedNullable
             val isEnum = decl.classKind == ClassKind.ENUM_CLASS
             val isData = decl.modifiers.contains(Modifier.DATA)
-            val needsContextual = ksType.requiresContextual(resolver)
+            val needsContextual = needsContextualSerializer(ksType, resolver)
 
             val isValueByModifier = decl.modifiers.contains(Modifier.VALUE)
             val isValueByAnnotation = decl.annotations.any {

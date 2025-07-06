@@ -19,7 +19,8 @@ data class Model(
     val optInMarkers: List<String>? = null,
     val isVersionOf: String? = null,
     val schemaVersion: Int? = null,
-    val nominalTyping: String? = null
+    val nominalTyping: String? = null,
+    val autoContextual: Boolean = true
 ) {
     init {
         require(properties.isNotEmpty()) {
