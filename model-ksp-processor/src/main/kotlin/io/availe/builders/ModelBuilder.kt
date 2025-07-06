@@ -108,14 +108,14 @@ internal fun buildModel(
             name = SCHEMA_VERSION_FIELD,
             typeInfo = TypeInfo("kotlin.Int", isNullable = false),
             dtoVariants = modelDtoVariants,
-            annotations = null,
+            annotations = emptyList(),
             nominalTyping = modelNominalTyping,
             autoContextual = modelAutoContextual
         )
         properties.add(schemaVersionProperty)
     }
 
-    val allOptInMarkers = extractAllOptInMarkers(declaration).takeIf { it.isNotEmpty() }
+    val allOptInMarkers = extractAllOptInMarkers(declaration)
 
     return Model(
         name = declaration.simpleName.asString(),

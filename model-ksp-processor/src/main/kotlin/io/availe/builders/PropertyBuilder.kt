@@ -21,7 +21,7 @@ private fun isGeneratedVariantContainer(declaration: KSClassDeclaration?): Boole
 internal fun processProperty(
     propertyDeclaration: KSPropertyDeclaration,
     modelDtoVariants: Set<DtoVariant>,
-    modelNominalTyping: NominalTyping?,
+    modelNominalTyping: NominalTyping,
     modelAutoContextual: AutoContextual,
     resolver: Resolver,
     frameworkDeclarations: Set<KSClassDeclaration>,
@@ -81,7 +81,7 @@ internal fun processProperty(
 
     val ksType = propertyDeclaration.type.resolve()
     val typeInfo = KSTypeInfo.from(ksType, environment, resolver).toModelTypeInfo()
-    val propertyAnnotations: List<AnnotationModel>? =
+    val propertyAnnotations: List<AnnotationModel> =
         propertyDeclaration.annotations.toAnnotationModels(frameworkDeclarations)
 
     val foreignDecl = resolver.getClassDeclarationByName(
@@ -123,9 +123,9 @@ private fun createForeignProperty(
     typeInformation: TypeInfo,
     foreignModelDeclaration: KSClassDeclaration,
     dtoVariants: Set<DtoVariant>,
-    annotations: List<AnnotationModel>?,
-    nominalTyping: NominalTyping?,
-    autoContextual: AutoContextual?
+    annotations: List<AnnotationModel>,
+    nominalTyping: NominalTyping,
+    autoContextual: AutoContextual
 ): ForeignProperty {
     val simpleName = foreignModelDeclaration.simpleName.asString()
     val foreignModelNameForLookup = if (simpleName.endsWith("Schema")) {

@@ -28,7 +28,7 @@ internal fun resolveTypeNameForProperty(
         ClassName("io.availe.models", "Patchable")
     }
 
-    val finalAutoContextualEnabled = (property.autoContextual ?: model.autoContextual) == AutoContextual.ENABLED
+    val finalAutoContextualEnabled = property.autoContextual == AutoContextual.ENABLED
 
     val baseType = if (property is ForeignProperty) {
         buildRecursiveDtoTypeName(property.typeInfo, dtoVariant, modelsByName, isContainerSerializable)

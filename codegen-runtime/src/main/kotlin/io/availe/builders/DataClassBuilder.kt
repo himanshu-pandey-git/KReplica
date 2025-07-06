@@ -31,7 +31,7 @@ fun buildDataTransferObjectClass(
 
     val typeSpecBuilder = TypeSpec.classBuilder(generatedClassName).addModifiers(KModifier.DATA)
 
-    model.annotations?.forEach { annotationModel ->
+    model.annotations.forEach { annotationModel ->
         typeSpecBuilder.addAnnotation(buildAnnotationSpec(annotationModel))
     }
 
@@ -75,12 +75,12 @@ fun buildDataTransferObjectClass(
 
         if (shouldFilterContextual) {
             annotationsToApply =
-                annotationsToApply?.filterNot { it.qualifiedName == "kotlinx.serialization.Contextual" }
+                annotationsToApply.filterNot { it.qualifiedName == "kotlinx.serialization.Contextual" }
         }
 
-        annotationsToApply = annotationsToApply?.filterNot { it.qualifiedName == OPT_IN_QUALIFIED_NAME }
+        annotationsToApply = annotationsToApply.filterNot { it.qualifiedName == OPT_IN_QUALIFIED_NAME }
 
-        annotationsToApply?.forEach { annotationModel ->
+        annotationsToApply.forEach { annotationModel ->
             paramBuilder.addAnnotation(buildAnnotationSpec(annotationModel))
         }
 

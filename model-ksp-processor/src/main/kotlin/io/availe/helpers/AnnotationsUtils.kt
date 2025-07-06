@@ -114,10 +114,9 @@ private fun ksAnnotationToModel(
 
 fun Sequence<KSAnnotation>.toAnnotationModels(
     frameworkDeclarations: Set<KSClassDeclaration>
-): List<AnnotationModel>? =
+): List<AnnotationModel> =
     mapNotNull { ksAnnotationToModel(it, frameworkDeclarations) }
         .toList()
-        .takeIf { it.isNotEmpty() }
 
 internal fun isNonHiddenModelAnnotation(declaration: KSClassDeclaration): Boolean {
     val isHidden = declaration.annotations.any {

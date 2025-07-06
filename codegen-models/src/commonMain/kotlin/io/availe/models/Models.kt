@@ -15,11 +15,11 @@ data class Model(
     val properties: List<Property>,
     val dtoVariants: Set<DtoVariant>,
     val annotationConfigs: List<AnnotationConfigModel> = emptyList(),
-    val annotations: List<AnnotationModel>? = null,
-    val optInMarkers: List<String>? = null,
+    val annotations: List<AnnotationModel> = emptyList(),
+    val optInMarkers: List<String> = emptyList(),
     val isVersionOf: String? = null,
     val schemaVersion: Int? = null,
-    val nominalTyping: NominalTyping? = null,
+    val nominalTyping: NominalTyping,
     val autoContextual: AutoContextual = AutoContextual.ENABLED
 ) {
     init {

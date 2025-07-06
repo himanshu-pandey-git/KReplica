@@ -72,7 +72,7 @@ private fun generateSchemaFile(
                 .addModifiers(KModifier.SEALED)
                 .addSuperinterface(ClassName(version.packageName, schemaFileName))
                 .apply {
-                    version.annotations?.forEach { annotationModel ->
+                    version.annotations.forEach { annotationModel ->
                         addAnnotation(buildAnnotationSpec(annotationModel))
                     }
                     val isVersionSerializable =
@@ -95,7 +95,7 @@ private fun generateSchemaFile(
             .addModifiers(KModifier.SEALED)
             .addKdoc("A sealed hierarchy representing all variants of the %L data model.", baseName)
 
-        model.annotations?.forEach { annotationModel ->
+        model.annotations.forEach { annotationModel ->
             schemaBuilder.addAnnotation(buildAnnotationSpec(annotationModel))
         }
 
@@ -188,10 +188,9 @@ private fun determineValueClassNames(
 
 private fun propertyNeedsValueClassWrapper(
     property: RegularProperty,
-    modelNominalTyping: NominalTyping?,
     existingValueClasses: Set<String>
 ): Boolean {
-    val finalTyping = property.nominalTyping ?: modelNominalTyping
+    val finalTyping = property.nominalTyping
     if (finalTyping != NominalTyping.ENABLED) return false
 
     val skip = property.typeInfo.isEnum ||
@@ -218,10 +217,9 @@ private fun generateAndAddValueClasses(
 ) {
     val allValueClassData =
         versions.flatMap { version ->
-            val modelNominalTyping = version.nominalTyping
             version.properties
                 .filterIsInstance<RegularProperty>()
-                .filter { propertyNeedsValueClassWrapper(it, modelNominalTyping, existingValueClasses) }
+                .filter { propertyNeedsValueClassWrapper(it, existingValueClasses) }
                 .mapNotNull { property ->
                     valueClassNames[version.name to property.name]?.let { className ->
                         Triple(property, version, className)
@@ -239,7 +237,7 @@ private fun generateAndAddValueClasses(
         val isSerializable = triples.any { (_, version, _) ->
             version.annotationConfigs.any { it.annotation.qualifiedName == SERIALIZABLE_QUALIFIED_NAME }
         }
-        val isAutoContextual = triples.any { (_, version, _) -> version.autoContextual == AutoContextual.ENABLED }
+        val isAutoContextual = triples.any { (property, _, _) -> property.autoContextual == AutoContextual.ENABLED }
 
         object {
             val spec = buildValueClass(className, representativeProperty, isSerializable, isAutoContextual)
@@ -287,7 +285,7 @@ private fun FileSpec.Builder.addTypesWithHeader(
 private fun FileSpec.Builder.addOptInMarkersForModels(
     models: List<Model>
 ): FileSpec.Builder {
-    val distinctMarkers = models.flatMap { it.optInMarkers ?: emptyList() }.distinct()
+    val distinctMarkers = models.flatMap { it.optInMarkers }.distinct()
     if (distinctMarkers.isNotEmpty()) {
         val format = distinctMarkers.joinToString(", ") { "%T::class" }
         val args = distinctMarkers.map { fq ->

@@ -19,8 +19,8 @@ fun buildValueClass(
     val constructorParameterBuilder = ParameterSpec.builder(VALUE_PROPERTY_NAME, underlyingTypeName)
 
     property.annotations
-        ?.filterNot { it.qualifiedName == OPT_IN_QUALIFIED_NAME }
-        ?.forEach { annotation ->
+        .filterNot { it.qualifiedName == OPT_IN_QUALIFIED_NAME }
+        .forEach { annotation ->
             constructorParameterBuilder.addAnnotation(buildAnnotationSpec(annotation))
         }
     return TypeSpec.classBuilder(className)
