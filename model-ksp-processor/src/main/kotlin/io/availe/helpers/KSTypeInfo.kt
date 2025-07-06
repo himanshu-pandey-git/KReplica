@@ -43,7 +43,7 @@ data class KSTypeInfo(
             val nullable = ksType.isMarkedNullable
             val isEnum = decl.classKind == ClassKind.ENUM_CLASS
             val isData = decl.modifiers.contains(Modifier.DATA)
-            val needsContextual = ksType.requiresContextual(resolver)
+            val needsContextual = needsContextualSerializer(ksType, resolver)
 
             val isValueByModifier = decl.modifiers.contains(Modifier.VALUE)
             val isValueByAnnotation = decl.annotations.any {
@@ -57,10 +57,7 @@ data class KSTypeInfo(
     }
 }
 
-fun KSTypeInfo.toModelTypeInfo(
-    customSerializerFqName: String? = null,
-    forceContextual: Boolean = false
-): io.availe.models.TypeInfo =
+fun KSTypeInfo.toModelTypeInfo(): io.availe.models.TypeInfo =
     io.availe.models.TypeInfo(
         qualifiedName = qualifiedName,
         arguments = arguments.map { it.toModelTypeInfo() },
@@ -68,7 +65,5 @@ fun KSTypeInfo.toModelTypeInfo(
         isEnum = isEnum,
         isValueClass = isValueClass,
         isDataClass = isDataClass,
-        requiresContextual = requiresContextual,
-        customSerializerFqName = customSerializerFqName,
-        forceContextual = forceContextual
+        requiresContextual = requiresContextual
     )

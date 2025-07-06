@@ -8,3 +8,17 @@ enum class DtoVariant(val suffix: String) {
     CREATE("CreateRequest"),
     PATCH("PatchRequest")
 }
+
+@Serializable
+enum class NominalTyping {
+    ENABLED,
+    DISABLED,
+    INHERIT
+}
+
+@Serializable
+enum class AutoContextual {
+    ENABLED,
+    DISABLED,
+    INHERIT
+}

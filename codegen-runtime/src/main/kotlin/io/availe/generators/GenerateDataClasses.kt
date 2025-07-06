@@ -4,9 +4,7 @@ import com.squareup.kotlinpoet.*
 import io.availe.SCHEMA_SUFFIX
 import io.availe.SERIALIZABLE_QUALIFIED_NAME
 import io.availe.builders.*
-import io.availe.models.ForeignProperty
-import io.availe.models.Model
-import io.availe.models.RegularProperty
+import io.availe.models.*
 import io.availe.utils.NamingUtils
 import io.availe.utils.fieldsFor
 import org.slf4j.LoggerFactory
@@ -190,11 +188,11 @@ private fun determineValueClassNames(
 
 private fun propertyNeedsValueClassWrapper(
     property: RegularProperty,
-    modelNominalTyping: String?,
+    modelNominalTyping: NominalTyping?,
     existingValueClasses: Set<String>
 ): Boolean {
     val finalTyping = property.nominalTyping ?: modelNominalTyping
-    if (finalTyping != "ENABLED") return false
+    if (finalTyping != NominalTyping.ENABLED) return false
 
     val skip = property.typeInfo.isEnum ||
             property.typeInfo.isValueClass ||
@@ -241,9 +239,10 @@ private fun generateAndAddValueClasses(
         val isSerializable = triples.any { (_, version, _) ->
             version.annotationConfigs.any { it.annotation.qualifiedName == SERIALIZABLE_QUALIFIED_NAME }
         }
+        val isAutoContextual = triples.any { (_, version, _) -> version.autoContextual == AutoContextual.ENABLED }
 
         object {
-            val spec = buildValueClass(className, representativeProperty, isSerializable)
+            val spec = buildValueClass(className, representativeProperty, isSerializable, isAutoContextual)
             val propertyName = representativeProperty.name
         }
     }

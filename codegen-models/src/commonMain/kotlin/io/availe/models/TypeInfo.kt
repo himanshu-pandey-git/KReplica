@@ -10,7 +10,5 @@ data class TypeInfo(
     val isEnum: Boolean = false,
     val isValueClass: Boolean = false,
     val isDataClass: Boolean = false,
-    val requiresContextual: Boolean = false,
-    val customSerializerFqName: String? = null,
-    val forceContextual: Boolean = false
+    val requiresContextual: Boolean = false
 )

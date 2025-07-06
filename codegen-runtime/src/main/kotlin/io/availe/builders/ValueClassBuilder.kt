@@ -9,9 +9,13 @@ import io.availe.models.RegularProperty
 fun buildValueClass(
     className: String,
     property: RegularProperty,
-    isSerializable: Boolean
+    isSerializable: Boolean,
+    isAutoContextual: Boolean
 ): TypeSpec {
-    val underlyingTypeName = property.typeInfo.toTypeName(isContainerSerializable = isSerializable)
+    val underlyingTypeName = property.typeInfo.toTypeName(
+        isContainerSerializable = isSerializable,
+        autoContextualEnabled = isAutoContextual
+    )
     val constructorParameterBuilder = ParameterSpec.builder(VALUE_PROPERTY_NAME, underlyingTypeName)
 
     property.annotations

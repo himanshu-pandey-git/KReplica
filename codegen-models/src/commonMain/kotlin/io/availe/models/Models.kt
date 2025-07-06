@@ -19,11 +19,15 @@ data class Model(
     val optInMarkers: List<String>? = null,
     val isVersionOf: String? = null,
     val schemaVersion: Int? = null,
-    val nominalTyping: String? = null
+    val nominalTyping: NominalTyping? = null,
+    val autoContextual: AutoContextual = AutoContextual.ENABLED
 ) {
     init {
         require(properties.isNotEmpty()) {
             "Model validation failed for '$name': Model interfaces cannot be empty and must contain at least one property."
+        }
+        require(this.autoContextual != AutoContextual.INHERIT) {
+            "Model validation failed for '${name}': autoContextual cannot be INHERIT at the model level. Please use ENABLED or DISABLED."
         }
         val invalidProperties = properties.filter {
             !this.dtoVariants.containsAll(it.dtoVariants)

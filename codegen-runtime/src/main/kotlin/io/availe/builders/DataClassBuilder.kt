@@ -2,10 +2,7 @@ package io.availe.builders
 
 import com.squareup.kotlinpoet.*
 import io.availe.*
-import io.availe.models.DtoVariant
-import io.availe.models.Model
-import io.availe.models.Property
-import io.availe.models.RegularProperty
+import io.availe.models.*
 
 internal fun Model.isSerializable(dtoVariant: DtoVariant): Boolean {
     return annotationConfigs.any { config ->
@@ -70,7 +67,7 @@ fun buildDataTransferObjectClass(
 
         var annotationsToApply = property.annotations
 
-        val isWrappedInValueClass = (property.nominalTyping == "ENABLED" &&
+        val isWrappedInValueClass = (property.nominalTyping == NominalTyping.ENABLED &&
                 !propertyShouldSkipWrapping(property, existingValueClasses) &&
                 property is RegularProperty)
 
@@ -88,7 +85,7 @@ fun buildDataTransferObjectClass(
         }
 
         if (property.name == SCHEMA_VERSION_PROPERTY_NAME && dtoVariant != DtoVariant.PATCH) {
-            val isWrapped = (property.nominalTyping == "ENABLED" &&
+            val isWrapped = (property.nominalTyping == NominalTyping.ENABLED &&
                     !propertyShouldSkipWrapping(property, existingValueClasses) &&
                     property is RegularProperty)
 

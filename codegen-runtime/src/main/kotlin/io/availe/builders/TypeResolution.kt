@@ -1,11 +1,9 @@
 package io.availe.builders
 
-import com.squareup.kotlinpoet.AnnotationSpec
 import com.squareup.kotlinpoet.ClassName
 import com.squareup.kotlinpoet.ParameterizedTypeName.Companion.parameterizedBy
 import com.squareup.kotlinpoet.TypeName
 import io.availe.SERIALIZABLE_PATCHABLE_CLASS_NAME
-import io.availe.SERIALIZABLE_QUALIFIED_NAME
 import io.availe.models.*
 
 internal fun propertyShouldSkipWrapping(property: Property, existingValueClasses: Set<String>): Boolean {
@@ -30,30 +28,19 @@ internal fun resolveTypeNameForProperty(
         ClassName("io.availe.models", "Patchable")
     }
 
-    if (property.typeInfo.customSerializerFqName != null) {
-        val baseType = buildSimpleTypeName(property.typeInfo)
-        val serializerFqName = property.typeInfo.customSerializerFqName!!.removeSuffix("::class")
-        val serializerClassName = serializerFqName.asClassName()
-
-        val serializableAnnotation = AnnotationSpec.builder(SERIALIZABLE_QUALIFIED_NAME.asClassName())
-            .addMember("with = %T::class", serializerClassName)
-            .build()
-
-        val annotatedType = baseType.copy(annotations = baseType.annotations + serializableAnnotation)
-        return if (dtoVariant == DtoVariant.PATCH) patchableClassName.parameterizedBy(annotatedType) else annotatedType
-    }
+    val finalAutoContextualEnabled = (property.autoContextual ?: model.autoContextual) == AutoContextual.ENABLED
 
     val baseType = if (property is ForeignProperty) {
         buildRecursiveDtoTypeName(property.typeInfo, dtoVariant, modelsByName, isContainerSerializable)
     } else {
-        val useWrapping = property.nominalTyping == "ENABLED"
+        val useWrapping = property.nominalTyping == NominalTyping.ENABLED
         val skipWrapping = propertyShouldSkipWrapping(property, existingValueClasses)
         if (useWrapping && !skipWrapping) {
             valueClassNames[model.name to property.name]?.let { vcName ->
                 ClassName(model.packageName, vcName)
-            } ?: buildTypeNameWithContextual(property.typeInfo, isContainerSerializable)
+            } ?: buildTypeNameWithContextual(property.typeInfo, isContainerSerializable, finalAutoContextualEnabled)
         } else {
-            buildTypeNameWithContextual(property.typeInfo, isContainerSerializable)
+            buildTypeNameWithContextual(property.typeInfo, isContainerSerializable, finalAutoContextualEnabled)
         }
     }
 
@@ -85,7 +72,7 @@ internal fun buildRecursiveDtoTypeName(
 
     if (typeInfo.arguments.isEmpty()) {
         if (targetModel == null) {
-            return buildTypeNameWithContextual(typeInfo, isCurrentContainerSerializable)
+            return buildTypeNameWithContextual(typeInfo, isCurrentContainerSerializable, true)
         }
 
         val finalDtoName = if (targetModel.isVersionOf != null) {

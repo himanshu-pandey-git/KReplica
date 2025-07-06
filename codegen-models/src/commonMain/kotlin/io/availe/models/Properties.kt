@@ -8,7 +8,8 @@ sealed class Property {
     abstract val typeInfo: TypeInfo
     abstract val dtoVariants: Set<DtoVariant>
     abstract val annotations: List<AnnotationModel>?
-    abstract val nominalTyping: String?
+    abstract val nominalTyping: NominalTyping?
+    abstract val autoContextual: AutoContextual?
 }
 
 @Serializable
@@ -17,7 +18,8 @@ data class RegularProperty(
     override val typeInfo: TypeInfo,
     override val dtoVariants: Set<DtoVariant>,
     override val annotations: List<AnnotationModel>? = null,
-    override val nominalTyping: String? = null
+    override val nominalTyping: NominalTyping? = null,
+    override val autoContextual: AutoContextual? = null
 ) : Property()
 
 @Serializable
@@ -27,5 +29,6 @@ data class ForeignProperty(
     val foreignModelName: String,
     override val dtoVariants: Set<DtoVariant>,
     override val annotations: List<AnnotationModel>? = null,
-    override val nominalTyping: String? = null
+    override val nominalTyping: NominalTyping? = null,
+    override val autoContextual: AutoContextual? = null
 ) : Property()

@@ -21,7 +21,7 @@ Add the KSP and KReplica plugins to your module's `build.gradle.kts`:
 ```kotlin
 plugins {
     id("com.google.devtools.ksp") version "2.1.21-2.0.1" // Use a KSP version that matches your Kotlin version
-    id("io.availe.kreplica") version "2.0.0"
+    id("io.availe.kreplica") version "2.1.0"
 }
 ```
 
@@ -167,6 +167,22 @@ See the [generated code](docs/EXAMPLES.md#example-versioned-w-schema-version-ann
 
 Note all versioned declarations automatically inject a `schema_version` property into the generated DTOs.
 
+## Directly applying annotations
+
+If the annotation can be applied on interfaces, you can directly use it without the need for `Replicate.Apply`. For
+example:
+
+```kotlin
+@Replicate.Model(variants = [DtoVariant.DATA])
+@Deprecated("Use NewUserAccount instead")
+private interface UserAccount {
+    @Deprecated("Use newId instead")
+    val id: Int
+}
+```
+
+See the [generated code](docs/EXAMPLES.md#directly-applying-annotations)
+
 ## Example (serializable)
 
 Interfaces cannot directly implement some annotations, including `Serializable`. Instead, you can use Note
@@ -199,22 +215,6 @@ and emits
 the latter annotation in the generated code.
 
 If you wish to force a property to use `Contextual`, you may use the annotation `@Replicate.ForceContextual`.
-
-## Directly applying annotations
-
-If the annotation can be applied on interfaces, you can directly use it without the need for `Replicate.Apply`. For
-example:
-
-```kotlin
-@Replicate.Model(variants = [DtoVariant.DATA])
-@Deprecated("Use NewUserAccount instead")
-private interface UserAccount {
-    @Deprecated("Use newId instead")
-    val id: Int
-}
-```
-
-See the [generated code](docs/EXAMPLES.md#directly-applying-annotations)
 
 ## The hide annotation
 

@@ -3,6 +3,7 @@ package io.availe.builders
 import com.google.devtools.ksp.processing.Resolver
 import com.google.devtools.ksp.processing.SymbolProcessorEnvironment
 import com.google.devtools.ksp.symbol.KSClassDeclaration
+import com.google.devtools.ksp.symbol.KSDeclaration
 import com.google.devtools.ksp.symbol.KSPropertyDeclaration
 import com.google.devtools.ksp.symbol.Modifier
 import io.availe.helpers.*
@@ -20,7 +21,8 @@ private fun isGeneratedVariantContainer(declaration: KSClassDeclaration?): Boole
 internal fun processProperty(
     propertyDeclaration: KSPropertyDeclaration,
     modelDtoVariants: Set<DtoVariant>,
-    modelNominalTyping: String?,
+    modelNominalTyping: NominalTyping?,
+    modelAutoContextual: AutoContextual,
     resolver: Resolver,
     frameworkDeclarations: Set<KSClassDeclaration>,
     environment: SymbolProcessorEnvironment
@@ -47,8 +49,8 @@ internal fun processProperty(
         val includeArg = fieldAnnotation.arguments.find { it.name?.asString() == "include" }?.value as? List<*>
         val excludeArg = fieldAnnotation.arguments.find { it.name?.asString() == "exclude" }?.value as? List<*>
 
-        val include = includeArg?.map { DtoVariant.valueOf(it.toString().substringAfterLast('.')) }?.toSet() ?: emptySet()
-        val exclude = excludeArg?.map { DtoVariant.valueOf(it.toString().substringAfterLast('.')) }?.toSet() ?: emptySet()
+        val include = includeArg?.map { DtoVariant.valueOf((it as KSDeclaration).simpleName.asString()) }?.toSet() ?: emptySet()
+        val exclude = excludeArg?.map { DtoVariant.valueOf((it as KSDeclaration).simpleName.asString()) }?.toSet() ?: emptySet()
 
         when {
             include.isNotEmpty() -> include
@@ -59,23 +61,26 @@ internal fun processProperty(
 
     val propertyNominalTyping = fieldAnnotation?.arguments
         ?.find { it.name?.asString() == "nominalTyping" }
-        ?.value?.toString()?.substringAfterLast('.')
+        ?.let { NominalTyping.valueOf((it.value as KSDeclaration).simpleName.asString()) }
 
-    val finalNominalTyping = if (propertyNominalTyping != null && propertyNominalTyping != "INHERIT") {
+    val finalNominalTyping = if (propertyNominalTyping != null && propertyNominalTyping != NominalTyping.INHERIT) {
         propertyNominalTyping
     } else {
         modelNominalTyping
     }
 
-    val useSerializerAnnotation =
-        propertyDeclaration.annotations.firstOrNull { it.isAnnotation(REPLICATE_WITH_SERIALIZER_ANNOTATION_NAME) }
-    val forceContextualAnnotation =
-        propertyDeclaration.annotations.firstOrNull { it.isAnnotation(REPLICATE_FORCE_CONTEXTUAL_ANNOTATION_NAME) }
-    val customSerializer = useSerializerAnnotation?.arguments?.firstOrNull()?.value as? String
-    val forceContextual = forceContextualAnnotation != null
+    val propertyAutoContextual = fieldAnnotation?.arguments
+        ?.find { it.name?.asString() == "autoContextual" }
+        ?.let { AutoContextual.valueOf((it.value as KSDeclaration).simpleName.asString()) }
+
+    val finalAutoContextual = if (propertyAutoContextual != null && propertyAutoContextual != AutoContextual.INHERIT) {
+        propertyAutoContextual
+    } else {
+        modelAutoContextual
+    }
 
     val ksType = propertyDeclaration.type.resolve()
-    val typeInfo = KSTypeInfo.from(ksType, environment, resolver).toModelTypeInfo(customSerializer, forceContextual)
+    val typeInfo = KSTypeInfo.from(ksType, environment, resolver).toModelTypeInfo()
     val propertyAnnotations: List<AnnotationModel>? =
         propertyDeclaration.annotations.toAnnotationModels(frameworkDeclarations)
 
@@ -98,7 +103,8 @@ internal fun processProperty(
             foreignDecl,
             propertyVariants,
             propertyAnnotations,
-            finalNominalTyping
+            finalNominalTyping,
+            finalAutoContextual
         )
     } else {
         RegularProperty(
@@ -106,7 +112,8 @@ internal fun processProperty(
             typeInfo = typeInfo,
             dtoVariants = propertyVariants,
             annotations = propertyAnnotations,
-            nominalTyping = finalNominalTyping
+            nominalTyping = finalNominalTyping,
+            autoContextual = finalAutoContextual
         )
     }
 }
@@ -117,7 +124,8 @@ private fun createForeignProperty(
     foreignModelDeclaration: KSClassDeclaration,
     dtoVariants: Set<DtoVariant>,
     annotations: List<AnnotationModel>?,
-    nominalTyping: String?
+    nominalTyping: NominalTyping?,
+    autoContextual: AutoContextual?
 ): ForeignProperty {
     val simpleName = foreignModelDeclaration.simpleName.asString()
     val foreignModelNameForLookup = if (simpleName.endsWith("Schema")) {
@@ -131,6 +139,7 @@ private fun createForeignProperty(
         foreignModelName = foreignModelNameForLookup,
         dtoVariants = dtoVariants,
         annotations = annotations,
-        nominalTyping = nominalTyping
+        nominalTyping = nominalTyping,
+        autoContextual = autoContextual
     )
 }
