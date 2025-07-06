@@ -21,7 +21,7 @@ Add the KSP and KReplica plugins to your module's `build.gradle.kts`:
 ```kotlin
 plugins {
     id("com.google.devtools.ksp") version "2.1.21-2.0.1" // Use a KSP version that matches your Kotlin version
-    id("io.availe.kreplica") version "2.1.0"
+    id("io.availe.kreplica") version "3.0.0"
 }
 ```
 
@@ -189,10 +189,41 @@ Interfaces cannot directly implement some annotations, including `Serializable`.
 `Replicate.Apply`.
 
 ```kotlin
-@Replicate.Model(variants = [DtoVariant.DATA, DtoVariant.PATCH])
-@Replicate.Apply(annotations = [Serializable::class])
-private interface UserAccount {
-    val id: Int
+@OptIn(ExperimentalTime::class)
+object InstantAsStringSerializer : KSerializer<Instant> {
+    override val descriptor: SerialDescriptor =
+        PrimitiveSerialDescriptor("Instant", PrimitiveKind.STRING)
+
+    override fun serialize(encoder: Encoder, value: Instant) {
+        encoder.encodeString(value.toString())
+    }
+
+    override fun deserialize(decoder: Decoder): Instant {
+        return Instant.parse(decoder.decodeString())
+    }
+}
+```
+
+```kotlin
+private interface UserAccount // this is a versioned schema declaration
+
+@OptIn(ExperimentalTime::class)
+@Replicate.Model(variants = [DtoVariant.DATA], autoContextual = AutoContextual.DISABLED)
+@Replicate.Apply([Serializable::class])
+private interface V1 : UserAccount {
+  val id: Int
+
+  // here we manually apply contextual, as it inherits the model's AutoContextual.DISABLED
+  @Contextual
+  val startTime: Instant
+
+  // here we manually specify which serializer we want to use
+  @Serializable(with = InstantAsStringSerializer::class)
+  val midTime: Instant
+
+  // here we override autoContextual to be ENABLED and let KReplica apply it automatically
+  @Replicate.Property(autoContextual = AutoContextual.ENABLED)
+  val endTime: List<List<Instant>>
 }
 ```
 
@@ -207,14 +238,9 @@ this,
 KReplica recursively applies
 `Contextual` in generated code, so it works regardless of generic nesting.
 
+If you wish, you can turn off the autoContextual flag on `Replicate.Model` or `Replicate.Property`.
+
 Types exempt from `Contextual` are whitelisted in `codegen-models/src/commonMain/kotlin/io/availe/models/Constants.kt`.
-
-For manual control, use the `@Replicate.WithSerializer(with = ...)` annotation. It works identically as
-`@Serializable(with = ...)`
-and emits
-the latter annotation in the generated code.
-
-If you wish to force a property to use `Contextual`, you may use the annotation `@Replicate.ForceContextual`.
 
 ## The hide annotation
 
