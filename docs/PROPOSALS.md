@@ -1,4 +1,6 @@
-For mapping, my current idea is to go with proposal 3. That said, my long term goal is proposal 1.
+Once the K2 Compiler API stabilizes, my idea is to go with proposal 1.
+
+Until then, I recommend using a third-party library like [Mappie](https://github.com/Mr-Mappie/mappie) (see proposal 3).
 
 ## Mapping (proposal 1):
 
