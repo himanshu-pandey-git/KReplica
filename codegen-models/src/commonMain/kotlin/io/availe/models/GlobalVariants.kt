@@ -1,0 +1,5 @@
+package io.availe.models
+
+interface KReplicaDataVariant
+interface KReplicaCreateVariant
+interface KReplicaPatchVariant

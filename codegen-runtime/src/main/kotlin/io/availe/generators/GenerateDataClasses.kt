@@ -58,11 +58,18 @@ private fun generateSchemaFile(
         val allVariants = versions.flatMap { it.dtoVariants }.toSet()
         allVariants.forEach { variant ->
             val interfaceName = "${variant.suffix}Variant"
-            val variantInterfaceSpec = TypeSpec.interfaceBuilder(interfaceName)
+            val variantInterfaceBuilder = TypeSpec.interfaceBuilder(interfaceName)
                 .addModifiers(KModifier.PUBLIC, KModifier.SEALED)
                 .addSuperinterface(ClassName(representativeModel.packageName, schemaFileName))
-                .build()
-            topLevelClassBuilder.addType(variantInterfaceSpec)
+
+            val globalVariantInterface = when (variant) {
+                DtoVariant.DATA -> ClassName("io.availe.models", "KReplicaDataVariant")
+                DtoVariant.CREATE -> ClassName("io.availe.models", "KReplicaCreateVariant")
+                DtoVariant.PATCH -> ClassName("io.availe.models", "KReplicaPatchVariant")
+            }
+            variantInterfaceBuilder.addSuperinterface(globalVariantInterface)
+
+            topLevelClassBuilder.addType(variantInterfaceBuilder.build())
         }
 
         versions.forEach { version ->
@@ -104,11 +111,19 @@ private fun generateSchemaFile(
         }
 
         dtos.forEach { dtoSpec ->
-            schemaBuilder.addType(
-                dtoSpec.toBuilder()
-                    .addSuperinterface(schemaInterfaceName)
-                    .build()
-            )
+            val dtoBuilder = dtoSpec.toBuilder()
+                .addSuperinterface(schemaInterfaceName)
+
+            DtoVariant.entries.find { it.suffix == dtoSpec.name }?.let { variant ->
+                val globalVariantInterface = when (variant) {
+                    DtoVariant.DATA -> ClassName("io.availe.models", "KReplicaDataVariant")
+                    DtoVariant.CREATE -> ClassName("io.availe.models", "KReplicaCreateVariant")
+                    DtoVariant.PATCH -> ClassName("io.availe.models", "KReplicaPatchVariant")
+                }
+                dtoBuilder.addSuperinterface(globalVariantInterface)
+            }
+
+            schemaBuilder.addType(dtoBuilder.build())
         }
         fileBuilder.addType(schemaBuilder.build())
     }
