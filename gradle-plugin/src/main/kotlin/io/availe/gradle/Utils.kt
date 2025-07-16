@@ -41,7 +41,10 @@ fun registerKReplicaCodegenTask(
         isCanBeConsumed = false
         isCanBeResolved = true
     }
-    project.dependencies.add(codegenConfiguration.name, "io.availe:codegen-runtime:$projectVersion")
+
+    val codegenDependency = "io.availe:codegen-runtime:$projectVersion:all@jar"
+    project.dependencies.add(codegenConfiguration.name, codegenDependency)
+
 
     val kotlinPoetOutputDirProvider: Provider<Directory> = project.layout.buildDirectory.dir(
         KReplicaPaths.KOTLIN_POET_GENERATED_DIR

@@ -2,6 +2,7 @@ plugins {
     alias(libs.plugins.kotlinJvm)
     `maven-publish`
     application
+    id("com.github.johnrengelman.shadow") version "8.1.1"
 }
 
 kotlin {
