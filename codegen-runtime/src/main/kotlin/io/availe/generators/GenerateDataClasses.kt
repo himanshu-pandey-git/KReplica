@@ -113,8 +113,7 @@ private fun generateSchemaFile(
                     DtoVariant.CREATE -> KReplicaCreateVariant::class.asClassName()
                     DtoVariant.PATCH -> KReplicaPatchVariant::class.asClassName()
                 }
-                val unversionedType = Unversioned::class.asClassName()
-                val parameterizedGlobalVariant = globalVariantInterfaceBase.parameterizedBy(unversionedType)
+                val parameterizedGlobalVariant = globalVariantInterfaceBase.parameterizedBy(schemaInterfaceName)
                 dtoBuilder.addSuperinterface(parameterizedGlobalVariant)
             }
 

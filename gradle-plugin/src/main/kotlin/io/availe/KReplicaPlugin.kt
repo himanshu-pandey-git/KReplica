@@ -11,7 +11,7 @@ class KReplicaPlugin : Plugin<Project> {
     override fun apply(target: Project) {
         target.logger.info("--- KREPLICA-PLUGIN: Applying 'io.availe.kreplica' to project ${target.path} ---")
 
-        val projectVersion = "4.0.0"
+        val projectVersion = "5.0.0"
 
         val kreplicaClasspath = target.configurations.create("kreplicaClasspath") {
             isCanBeResolved = true

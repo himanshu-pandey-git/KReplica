@@ -62,7 +62,9 @@ fun main(args: Array<String>) {
             } else {
                 emptyList<Model>()
             }
-        }.distinctBy { it.packageName + "." + it.name }
+        }.distinctBy {
+            "${it.packageName}:${it.isVersionOf}:${it.name}"
+        }
 
         if (allModels.isEmpty()) {
             logger.info("--- KREPLICA-CODEGEN: No models found to process. Exiting. ---")
@@ -79,6 +81,22 @@ fun main(args: Array<String>) {
         if (primaryModels.isEmpty()) {
             logger.info("--- KREPLICA-CODEGEN: No primary models found to generate. Exiting. ---")
             return
+        }
+
+        if (jsonPaths.size == 1 && primaryModels.size != allModels.size) {
+            val primarySet = primaryModels.map { "${it.packageName}:${it.isVersionOf}:${it.name}" }.toSet()
+            val allSet = allModels.map { "${it.packageName}:${it.isVersionOf}:${it.name}" }.toSet()
+            val missingKeys = primarySet - allSet
+
+            val errorMessage = """
+            Data integrity error: Model list sizes do not match after de-duplication.
+            Primary Models Count: ${primaryModels.size}
+            Deduplicated Models Count: ${allModels.size}
+            This likely indicates a flaw in the de-duplication logic or a name collision.
+            Missing model keys: $missingKeys
+            """.trimIndent()
+            logger.error(errorMessage)
+            error(errorMessage)
         }
 
         logger.info("--- KREPLICA-CODEGEN: Loaded ${allModels.size} total model definitions. Will generate sources for ${primaryModels.size} primary models.")
