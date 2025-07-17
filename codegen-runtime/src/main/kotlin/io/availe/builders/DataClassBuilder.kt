@@ -1,6 +1,7 @@
 package io.availe.builders
 
 import com.squareup.kotlinpoet.*
+import com.squareup.kotlinpoet.ParameterizedTypeName.Companion.parameterizedBy
 import io.availe.*
 import io.availe.models.*
 
@@ -41,12 +42,19 @@ fun buildDataTransferObjectClass(
 
     if (model.isVersionOf != null) {
         val schemaName = model.isVersionOf!! + "Schema"
-
         val versionInterface = ClassName(model.packageName, schemaName, model.name)
         typeSpecBuilder.addSuperinterface(versionInterface)
 
         val variantKindInterface = ClassName(model.packageName, schemaName, "${dtoVariant.suffix}Variant")
         typeSpecBuilder.addSuperinterface(variantKindInterface)
+
+        val globalVariantInterfaceBase = when (dtoVariant) {
+            DtoVariant.DATA -> KReplicaDataVariant::class.asClassName()
+            DtoVariant.CREATE -> KReplicaCreateVariant::class.asClassName()
+            DtoVariant.PATCH -> KReplicaPatchVariant::class.asClassName()
+        }
+        val parameterizedGlobalVariant = globalVariantInterfaceBase.parameterizedBy(versionInterface)
+        typeSpecBuilder.addSuperinterface(parameterizedGlobalVariant)
     }
 
     val constructorBuilder = FunSpec.constructorBuilder()

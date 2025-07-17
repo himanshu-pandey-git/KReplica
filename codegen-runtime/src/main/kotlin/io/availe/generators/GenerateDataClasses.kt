@@ -1,6 +1,7 @@
 package io.availe.generators
 
 import com.squareup.kotlinpoet.*
+import com.squareup.kotlinpoet.ParameterizedTypeName.Companion.parameterizedBy
 import io.availe.SCHEMA_SUFFIX
 import io.availe.SERIALIZABLE_QUALIFIED_NAME
 import io.availe.builders.*
@@ -59,16 +60,8 @@ private fun generateSchemaFile(
         allVariants.forEach { variant ->
             val interfaceName = "${variant.suffix}Variant"
             val variantInterfaceBuilder = TypeSpec.interfaceBuilder(interfaceName)
-                .addModifiers(KModifier.PUBLIC, KModifier.SEALED)
+                .addModifiers(KModifier.SEALED)
                 .addSuperinterface(ClassName(representativeModel.packageName, schemaFileName))
-
-            val globalVariantInterface = when (variant) {
-                DtoVariant.DATA -> ClassName("io.availe.models", "KReplicaDataVariant")
-                DtoVariant.CREATE -> ClassName("io.availe.models", "KReplicaCreateVariant")
-                DtoVariant.PATCH -> ClassName("io.availe.models", "KReplicaPatchVariant")
-            }
-            variantInterfaceBuilder.addSuperinterface(globalVariantInterface)
-
             topLevelClassBuilder.addType(variantInterfaceBuilder.build())
         }
 
@@ -115,12 +108,14 @@ private fun generateSchemaFile(
                 .addSuperinterface(schemaInterfaceName)
 
             DtoVariant.entries.find { it.suffix == dtoSpec.name }?.let { variant ->
-                val globalVariantInterface = when (variant) {
-                    DtoVariant.DATA -> ClassName("io.availe.models", "KReplicaDataVariant")
-                    DtoVariant.CREATE -> ClassName("io.availe.models", "KReplicaCreateVariant")
-                    DtoVariant.PATCH -> ClassName("io.availe.models", "KReplicaPatchVariant")
+                val globalVariantInterfaceBase = when (variant) {
+                    DtoVariant.DATA -> KReplicaDataVariant::class.asClassName()
+                    DtoVariant.CREATE -> KReplicaCreateVariant::class.asClassName()
+                    DtoVariant.PATCH -> KReplicaPatchVariant::class.asClassName()
                 }
-                dtoBuilder.addSuperinterface(globalVariantInterface)
+                val unversionedType = Unversioned::class.asClassName()
+                val parameterizedGlobalVariant = globalVariantInterfaceBase.parameterizedBy(unversionedType)
+                dtoBuilder.addSuperinterface(parameterizedGlobalVariant)
             }
 
             schemaBuilder.addType(dtoBuilder.build())

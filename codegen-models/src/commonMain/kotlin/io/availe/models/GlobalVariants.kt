@@ -1,5 +1,9 @@
 package io.availe.models
 
-interface KReplicaDataVariant
-interface KReplicaCreateVariant
-interface KReplicaPatchVariant
+object Unversioned
+
+interface KReplicaDataVariant<V : Any>
+
+interface KReplicaCreateVariant<V : Any>
+
+interface KReplicaPatchVariant<V : Any>
