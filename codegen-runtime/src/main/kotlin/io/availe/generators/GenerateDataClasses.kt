@@ -205,14 +205,12 @@ private fun propertyNeedsValueClassWrapper(
 
     val skip = property.typeInfo.isEnum ||
             property.typeInfo.isValueClass ||
-            property.typeInfo.isDataClass ||
-            property is ForeignProperty ||
-            existingValueClasses.contains(property.typeInfo.qualifiedName)
+            property.typeInfo.isDataClass || existingValueClasses.contains(property.typeInfo.qualifiedName)
 
     logger.debug(
         "Evaluating property='${property.name}' for value class wrapping. Result: ${!skip} " +
                 "(isEnum=${property.typeInfo.isEnum}, isValueClass=${property.typeInfo.isValueClass}, " +
-                "isDataClass=${property.typeInfo.isDataClass}, isForeign=${property is ForeignProperty})"
+                "isDataClass=${property.typeInfo.isDataClass}, isForeign=${false})"
     )
 
     return !skip
