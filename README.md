@@ -23,7 +23,7 @@ Add the KSP and KReplica plugins to your module's `build.gradle.kts`:
 ```kotlin
 plugins {
     id("com.google.devtools.ksp") version "2.1.21-2.0.1" // Use a KSP version that matches your Kotlin version
-    id("io.availe.kreplica") version "3.0.0"
+    id("io.availe.kreplica") version "5.0.0"
 }
 ```
 
