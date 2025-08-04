@@ -2,7 +2,7 @@
 
 KReplica is a DTO generator for KMM and Kotlin JVM. It runs automatically during Kotlin compilation.
 
-Please check out the [proposals](docs/PROPOSALS.md) for mapping to a source object.
+Also check out the new [website](https://kreplica.availe.io) for KReplica.
 
 ### Features:
 
