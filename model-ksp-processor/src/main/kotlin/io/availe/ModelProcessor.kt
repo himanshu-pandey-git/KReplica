@@ -16,30 +16,24 @@ import io.availe.models.Model
 import kotlinx.serialization.json.Json
 import java.io.OutputStreamWriter
 
+enum class ProcessingRound {
+    FIRST, SECOND
+}
+
 class ModelProcessor(private val env: SymbolProcessorEnvironment) : SymbolProcessor {
-    private var stubsGenerated = false
     private val models = mutableListOf<Model>()
     private val sourceSymbols = mutableListOf<KSClassDeclaration>()
+    private var round = ProcessingRound.FIRST
 
     override fun process(resolver: Resolver): List<KSAnnotated> {
-        if (stubsGenerated) {
-            env.logger.info("--- KREPLICA-KSP: Round 2: Processing models ---")
-            val modelSymbols = resolver
-                .getSymbolsWithAnnotation(MODEL_ANNOTATION_NAME)
-                .filterIsInstance<KSClassDeclaration>()
-                .filter(::isNonHiddenModelAnnotation)
-                .toList()
-
-            val frameworkDecls = getFrameworkDeclarations(resolver)
-            val builtModels = modelSymbols.map { decl ->
-                buildModel(decl, resolver, frameworkDecls, env)
-            }
-            this.models.addAll(builtModels)
-            this.sourceSymbols.addAll(modelSymbols)
-            return emptyList()
+        return when (round) {
+            ProcessingRound.FIRST -> processStubs(resolver)
+            ProcessingRound.SECOND -> processModels(resolver)
         }
+    }
 
-        env.logger.info("--- KREPLICA-KSP: Round 1: Generating Stubs ---")
+    // first round
+    private fun processStubs(resolver: Resolver): List<KSAnnotated> {
         val modelSymbols = resolver
             .getSymbolsWithAnnotation(MODEL_ANNOTATION_NAME)
             .filterIsInstance<KSClassDeclaration>()
@@ -48,16 +42,30 @@ class ModelProcessor(private val env: SymbolProcessorEnvironment) : SymbolProces
 
         if (modelSymbols.isNotEmpty()) {
             generateStubs(modelSymbols, env)
-        } else {
-            env.logger.info("--- KREPLICA-KSP: No models found to process. ---")
         }
 
-        stubsGenerated = true
+        round = ProcessingRound.SECOND
         return modelSymbols
     }
 
+    // second round
+    private fun processModels(resolver: Resolver): List<KSAnnotated> {
+        val modelSymbols = resolver
+            .getSymbolsWithAnnotation(MODEL_ANNOTATION_NAME)
+            .filterIsInstance<KSClassDeclaration>()
+            .filter(::isNonHiddenModelAnnotation)
+            .toList()
+
+        val frameworkDecls = getFrameworkDeclarations(resolver)
+        val builtModels = modelSymbols.map { decl ->
+            buildModel(decl, resolver, frameworkDecls, env)
+        }
+        this.models.addAll(builtModels)
+        this.sourceSymbols.addAll(modelSymbols)
+        return emptyList()
+    }
+
     override fun finish() {
-        env.logger.info("--- KREPLICA-KSP: Finish hook called. Writing models.json. ---")
         writeModelsToFile(this.models, this.sourceSymbols)
     }
 

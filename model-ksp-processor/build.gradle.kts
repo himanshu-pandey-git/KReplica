@@ -21,7 +21,7 @@ dependencies {
     implementation(libs.logback)
     implementation(libs.kotlinx.serialization.json)
     implementation(libs.kotlinx.datetime)
-    implementation(libs.arrow.core)
+
 }
 
 application {

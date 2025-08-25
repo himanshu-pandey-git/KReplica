@@ -14,8 +14,8 @@ plugins {
 }
 
 allprojects {
-    group   = "io.availe"
-    version = "5.0.0"
+    group = "io.availe"
+    version = "5.0.1"
 }
 
 subprojects {
@@ -25,9 +25,9 @@ subprojects {
 
 subprojects {
     pluginManager.apply {
-        withPlugin("org.jetbrains.kotlin.jvm")            { apply("com.vanniktech.maven.publish") }
-        withPlugin("org.jetbrains.kotlin.multiplatform")  { apply("com.vanniktech.maven.publish") }
-        withPlugin("java-gradle-plugin")                  { apply("com.vanniktech.maven.publish") }
+        withPlugin("org.jetbrains.kotlin.jvm") { apply("com.vanniktech.maven.publish") }
+        withPlugin("org.jetbrains.kotlin.multiplatform") { apply("com.vanniktech.maven.publish") }
+        withPlugin("java-gradle-plugin") { apply("com.vanniktech.maven.publish") }
     }
 }
 
