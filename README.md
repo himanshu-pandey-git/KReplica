@@ -1,6 +1,6 @@
 # KReplica
 
-KReplica is a DTO generator for KMM and Kotlin JVM. It runs automatically during Kotlin compilation.
+KReplica is a DTO generator for KMP and Kotlin JVM. It runs automatically during Kotlin compilation.
 
 Also check out the new [website](https://kreplica.availe.io) for KReplica (its documentation is more up-to-date than the README).
 
@@ -22,8 +22,8 @@ Add the KSP and KReplica plugins to your module's `build.gradle.kts`:
 
 ```kotlin
 plugins {
-    id("com.google.devtools.ksp") version "2.1.21-2.0.1" // Use a KSP version that matches your Kotlin version
-    id("io.availe.kreplica") version "5.0.0"
+    id("com.google.devtools.ksp") version "2.2.10-2.0.2" // Use a KSP version that matches your Kotlin version
+    id("io.availe.kreplica") version "5.0.1"
 }
 ```
 
