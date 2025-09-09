@@ -25,25 +25,25 @@ internal fun buildDataTransferObjectClass(
     dtoVariant: DtoVariant,
     modelsByName: Map<String, Model>
 ): TypeSpec {
-    val generatedClassName = dtoVariant.suffix
+    val constructorBuilder = FunSpec.constructorBuilder()
+    return TypeSpec.classBuilder(dtoVariant.suffix).apply {
+        addModifiers(KModifier.DATA)
+        addSuperinterfacesFor(model, dtoVariant)
+        addAnnotationsFor(model, dtoVariant)
+        properties.forEach { property ->
+            addConfiguredProperty(constructorBuilder, property, model, dtoVariant, modelsByName)
+        }
+        primaryConstructor(constructorBuilder.build())
+    }.build()
+}
 
-    val typeSpecBuilder = TypeSpec.classBuilder(generatedClassName).addModifiers(KModifier.DATA)
-
-    model.annotations.forEach { annotationModel ->
-        typeSpecBuilder.addAnnotation(buildAnnotationSpec(annotationModel))
-    }
-
-    model.annotationConfigs.filter { dtoVariant in it.variants }.forEach { config ->
-        typeSpecBuilder.addAnnotation(buildAnnotationSpec(config.annotation))
-    }
-
+private fun TypeSpec.Builder.addSuperinterfacesFor(model: Model, dtoVariant: DtoVariant) {
     if (model.isVersionOf != null) {
         val schemaName = model.isVersionOf + "Schema"
         val versionInterface = ClassName(model.packageName, schemaName, model.name)
-        typeSpecBuilder.addSuperinterface(versionInterface)
-
         val variantKindInterface = ClassName(model.packageName, schemaName, "${dtoVariant.suffix}Variant")
-        typeSpecBuilder.addSuperinterface(variantKindInterface)
+        addSuperinterface(versionInterface)
+        addSuperinterface(variantKindInterface)
 
         val globalVariantInterfaceBase = when (dtoVariant) {
             DtoVariant.DATA -> KReplicaDataVariant::class.asClassName()
@@ -51,57 +51,49 @@ internal fun buildDataTransferObjectClass(
             DtoVariant.PATCH -> KReplicaPatchVariant::class.asClassName()
         }
         val parameterizedGlobalVariant = globalVariantInterfaceBase.parameterizedBy(versionInterface)
-        typeSpecBuilder.addSuperinterface(parameterizedGlobalVariant)
+        addSuperinterface(parameterizedGlobalVariant)
     }
+}
 
-    val constructorBuilder = FunSpec.constructorBuilder()
-    val isSerializable = model.isSerializable(dtoVariant)
-    properties.forEach { property ->
-        val typeName =
-            resolveTypeNameForProperty(
-                property,
-                dtoVariant,
-                model,
-                modelsByName,
-                isContainerSerializable = isSerializable
-            )
+private fun TypeSpec.Builder.addAnnotationsFor(model: Model, dtoVariant: DtoVariant) {
+    model.annotations.forEach { annotationModel ->
+        addAnnotation(buildAnnotationSpec(annotationModel))
+    }
+    model.annotationConfigs.filter { dtoVariant in it.variants }.forEach { config ->
+        addAnnotation(buildAnnotationSpec(config.annotation))
+    }
+}
 
-        val paramBuilder = ParameterSpec.builder(property.name, typeName)
+private fun TypeSpec.Builder.addConfiguredProperty(
+    constructorBuilder: FunSpec.Builder,
+    property: Property,
+    model: Model,
+    dtoVariant: DtoVariant,
+    modelsByName: Map<String, Model>
+) {
+    val isContainerSerializable = model.isSerializable(dtoVariant)
+    val typeName = resolveTypeNameForProperty(property, dtoVariant, model, modelsByName, isContainerSerializable)
 
-        var annotationsToApply = property.annotations
-
+    val paramBuilder = ParameterSpec.builder(property.name, typeName).apply {
         val shouldFilterContextual = (dtoVariant == DtoVariant.PATCH)
-
-        if (shouldFilterContextual) {
-            annotationsToApply =
-                annotationsToApply.filterNot { it.qualifiedName == "kotlinx.serialization.Contextual" }
-        }
-
-        annotationsToApply = annotationsToApply.filterNot { it.qualifiedName == OPT_IN_QUALIFIED_NAME }
+        val annotationsToApply = property.annotations
+            .filterNot { it.qualifiedName == OPT_IN_QUALIFIED_NAME }
+            .filterNot { shouldFilterContextual && it.qualifiedName == "kotlinx.serialization.Contextual" }
 
         annotationsToApply.forEach { annotationModel ->
-            paramBuilder.addAnnotation(buildAnnotationSpec(annotationModel))
+            addAnnotation(buildAnnotationSpec(annotationModel))
         }
 
         if (property.name == SCHEMA_VERSION_PROPERTY_NAME && dtoVariant != DtoVariant.PATCH) {
-            paramBuilder.defaultValue("%L", model.schemaVersion)
+            defaultValue("%L", model.schemaVersion)
         }
 
         if (dtoVariant == DtoVariant.PATCH) {
             val patchableClassName = getPatchableClassName(model, dtoVariant)
-            paramBuilder.defaultValue(
-                "%T.%L",
-                patchableClassName,
-                UNCHANGED_OBJECT_NAME
-            )
+            defaultValue("%T.%L", patchableClassName, UNCHANGED_OBJECT_NAME)
         }
-        constructorBuilder.addParameter(paramBuilder.build())
-
-        val propertySpecBuilder = PropertySpec.builder(property.name, typeName).initializer(property.name)
-
-        typeSpecBuilder.addProperty(propertySpecBuilder.build())
     }
-    typeSpecBuilder.primaryConstructor(constructorBuilder.build())
 
-    return typeSpecBuilder.build()
+    constructorBuilder.addParameter(paramBuilder.build())
+    addProperty(PropertySpec.builder(property.name, typeName).initializer(property.name).build())
 }

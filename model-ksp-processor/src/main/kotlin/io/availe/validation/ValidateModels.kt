@@ -1,20 +1,24 @@
-package io.availe.utils
+package io.availe.validation
 
 import io.availe.models.DtoVariant
 import io.availe.models.ForeignProperty
 import io.availe.models.Model
+import io.availe.models.Property
 import org.slf4j.LoggerFactory
 
 private val logger = LoggerFactory.getLogger("io.availe.utils.ValidateModels")
+
+internal fun Model.fieldsFor(dtoVariant: DtoVariant): List<Property> =
+    this.properties.filter { dtoVariant in it.dtoVariants }
 
 internal fun validateModelReplications(allModels: List<Model>) {
     val modelsByName = allModels.associateBy { it.name }
     val validationErrors = mutableListOf<String>()
     allModels.forEach { model ->
-        if (DtoVariant.CREATE in model.dtoVariants && fieldsFor(model, DtoVariant.CREATE).isEmpty()) {
+        if (DtoVariant.CREATE in model.dtoVariants && model.fieldsFor(DtoVariant.CREATE).isEmpty()) {
             validationErrors.add(createEmptyVariantError(model, DtoVariant.CREATE))
         }
-        if (DtoVariant.PATCH in model.dtoVariants && fieldsFor(model, DtoVariant.PATCH).isEmpty()) {
+        if (DtoVariant.PATCH in model.dtoVariants && model.fieldsFor(DtoVariant.PATCH).isEmpty()) {
             validationErrors.add(createEmptyVariantError(model, DtoVariant.PATCH))
         }
         model.properties
@@ -61,12 +65,12 @@ private fun createDependencyError(
         Parent Model      : ${parentModel.name} (variants: ${parentModel.dtoVariants})
         Variant Requested : ${dtoVariant.name}
         Nested Property   : ${violatingProperty.name} (type: ${targetModel.name})
-    
+
     Why:
         The parent model '${parentModel.name}' is configured to generate a '${dtoVariant.name}' variant.
         This variant includes the property '${violatingProperty.name}', which refers to the model '${targetModel.name}'.
         However, '${targetModel.name}' (variants: ${targetModel.dtoVariants}) does not support the '${dtoVariant.name}' variant.
-    
+
     To fix this, either add '${dtoVariant.name}' to the variants of '${targetModel.name}', or adjust the variants of the '${violatingProperty.name}' property.
     """.trimIndent()
 }

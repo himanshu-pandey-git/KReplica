@@ -4,7 +4,7 @@ import com.google.devtools.ksp.processing.CodeGenerator
 import com.google.devtools.ksp.processing.Dependencies
 import io.availe.generators.generateDataClasses
 import io.availe.models.Model
-import io.availe.utils.validateModelReplications
+import io.availe.validation.validateModelReplications
 import org.slf4j.LoggerFactory
 
 internal object KReplicaCodegen {

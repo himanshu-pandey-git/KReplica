@@ -5,7 +5,7 @@ import com.google.devtools.ksp.processing.SymbolProcessorEnvironment
 import com.google.devtools.ksp.symbol.KSClassDeclaration
 import com.google.devtools.ksp.symbol.KSDeclaration
 import com.google.devtools.ksp.symbol.KSPropertyDeclaration
-import io.availe.helpers.*
+import io.availe.extensions.*
 import io.availe.models.*
 
 internal fun processProperty(
@@ -63,7 +63,7 @@ internal fun processProperty(
 
     val ksType = propertyDeclaration.type.resolve()
 
-    when (val validationResult = validateKReplicaTypeUsage(ksType, annotationContext)) {
+    when (val validationResult = ksType.validateKReplicaTypeUsage(annotationContext)) {
         is Invalid -> {
             val propertyName = propertyDeclaration.simpleName.asString()
             val parentInterfaceName =
@@ -77,7 +77,7 @@ internal fun processProperty(
                 KReplica Validation Error in '$parentInterfaceName':
                 Property '$propertyName' has an invalid type signature: '${validationResult.fullTypeName}'.
                 The type '$offendingModelName' is a KReplica model interface and cannot be used directly.
-                
+
                 To fix this, replace '$offendingModelName' with the generated schema: '$suggestedSchemaName'.
                 """.trimIndent()
             )
@@ -94,7 +94,7 @@ internal fun processProperty(
     val foreignDecl = resolver.getClassDeclarationByName(
         resolver.getKSNameFromString(typeInfo.qualifiedName)
     )
-    val isGeneratedForeignModel = isGeneratedVariantContainer(foreignDecl)
+    val isGeneratedForeignModel = foreignDecl.isGeneratedVariantContainer()
 
     environment.logger.logging(
         "processProperty name=${propertyDeclaration.simpleName.asString()} " +

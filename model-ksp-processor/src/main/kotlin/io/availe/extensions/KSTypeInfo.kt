@@ -1,4 +1,4 @@
-package io.availe.helpers
+package io.availe.extensions
 
 import com.google.devtools.ksp.processing.Resolver
 import com.google.devtools.ksp.processing.SymbolProcessorEnvironment
@@ -38,7 +38,7 @@ internal data class KSTypeInfo(
             val nullable = ksType.isMarkedNullable
             val isEnum = decl.classKind == ClassKind.ENUM_CLASS
             val isData = decl.modifiers.contains(Modifier.DATA)
-            val needsContextual = needsContextualSerializer(ksType, resolver)
+            val needsContextual = ksType.needsContextualSerializer(resolver)
 
             val isValueByModifier = decl.modifiers.contains(Modifier.VALUE)
             val isValueByAnnotation = decl.annotations.any {

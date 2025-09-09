@@ -1,4 +1,4 @@
-package io.availe.helpers
+package io.availe.extensions
 
 import com.google.devtools.ksp.symbol.KSClassDeclaration
 

@@ -8,10 +8,10 @@ import com.google.devtools.ksp.symbol.KSAnnotated
 import com.google.devtools.ksp.symbol.KSClassDeclaration
 import io.availe.builders.buildModel
 import io.availe.builders.generateStubs
-import io.availe.helpers.KReplicaAnnotationContext
-import io.availe.helpers.MODEL_ANNOTATION_NAME
-import io.availe.helpers.getFrameworkDeclarations
-import io.availe.helpers.isNonHiddenModelAnnotation
+import io.availe.extensions.KReplicaAnnotationContext
+import io.availe.extensions.MODEL_ANNOTATION_NAME
+import io.availe.extensions.getFrameworkDeclarations
+import io.availe.extensions.isNonHiddenModelAnnotation
 import io.availe.models.KReplicaPaths
 import io.availe.models.Model
 import kotlinx.serialization.json.Json
@@ -75,7 +75,7 @@ internal class ModelProcessor(private val env: SymbolProcessorEnvironment) : Sym
         val modelSymbols = resolver
             .getSymbolsWithAnnotation(MODEL_ANNOTATION_NAME)
             .filterIsInstance<KSClassDeclaration>()
-            .filter(::isNonHiddenModelAnnotation)
+            .filter { it.isNonHiddenModelAnnotation() }
             .toList()
 
         if (modelSymbols.isNotEmpty()) {
@@ -90,7 +90,7 @@ internal class ModelProcessor(private val env: SymbolProcessorEnvironment) : Sym
         val modelSymbols = resolver
             .getSymbolsWithAnnotation(MODEL_ANNOTATION_NAME)
             .filterIsInstance<KSClassDeclaration>()
-            .filter(::isNonHiddenModelAnnotation)
+            .filter { it.isNonHiddenModelAnnotation() }
             .toList()
 
         val modelAnnotationDeclaration =

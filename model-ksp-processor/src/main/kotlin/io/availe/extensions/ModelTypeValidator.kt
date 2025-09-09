@@ -1,4 +1,4 @@
-package io.availe.helpers
+package io.availe.extensions
 
 import com.google.devtools.ksp.symbol.KSClassDeclaration
 import com.google.devtools.ksp.symbol.KSType
@@ -12,30 +12,29 @@ internal data class Invalid(
     val fullTypeName: String
 ) : TypeValidationResult
 
-internal fun validateKReplicaTypeUsage(
-    type: KSType,
+internal fun KSType.validateKReplicaTypeUsage(
     context: KReplicaAnnotationContext
 ): TypeValidationResult {
-    if (type.isError) {
+    if (this.isError) {
         return Valid
     }
 
-    val declaration = type.declaration
+    val declaration = this.declaration
     if (declaration is KSClassDeclaration) {
         val hasModelAnnotation = declaration.annotations.any {
             it.shortName.asString() == context.modelAnnotation.simpleName.asString() &&
                     it.annotationType.resolve().declaration.qualifiedName?.asString() == context.modelAnnotation.qualifiedName?.asString()
         }
         if (hasModelAnnotation) {
-            return Invalid(declaration, type.toString())
+            return Invalid(declaration, this.toString())
         }
     }
 
-    for (argument in type.arguments) {
+    for (argument in this.arguments) {
         val argumentType = argument.type?.resolve() ?: continue
-        val result = validateKReplicaTypeUsage(argumentType, context)
+        val result = argumentType.validateKReplicaTypeUsage(context)
         if (result is Invalid) {
-            return Invalid(result.offendingDeclaration, type.toString())
+            return Invalid(result.offendingDeclaration, this.toString())
         }
     }
 

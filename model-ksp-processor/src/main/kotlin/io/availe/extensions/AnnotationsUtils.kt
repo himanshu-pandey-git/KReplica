@@ -1,4 +1,4 @@
-package io.availe.helpers
+package io.availe.extensions
 
 import com.google.devtools.ksp.processing.Resolver
 import com.google.devtools.ksp.processing.SymbolProcessorEnvironment
@@ -17,8 +17,8 @@ internal fun KSAnnotation.isAnnotation(qualifiedName: String): Boolean {
     return this.annotationType.resolve().declaration.qualifiedName?.asString() == qualifiedName
 }
 
-internal fun extractAllOptInMarkers(declaration: KSClassDeclaration): List<String> {
-    val classMarkers = declaration.annotations
+internal fun KSClassDeclaration.extractAllOptInMarkers(): List<String> {
+    val classMarkers = this.annotations
         .filter { it.isAnnotation(OPT_IN_ANNOTATION_NAME) }
         .flatMap { optInAnnotation ->
             (optInAnnotation.arguments.first().value as? List<*>)?.mapNotNull {
@@ -26,7 +26,7 @@ internal fun extractAllOptInMarkers(declaration: KSClassDeclaration): List<Strin
             } ?: emptyList()
         }
 
-    val propertyMarkers = declaration.getAllProperties()
+    val propertyMarkers = this.getAllProperties()
         .flatMap { property -> property.annotations }
         .filter { annotation -> annotation.isAnnotation(OPT_IN_ANNOTATION_NAME) }
         .flatMap { optInAnnotation ->
@@ -40,11 +40,10 @@ internal fun extractAllOptInMarkers(declaration: KSClassDeclaration): List<Strin
 
 internal data class VersioningInfo(val baseModelName: String, val schemaVersion: Int)
 
-internal fun determineVersioningInfo(
-    declaration: KSClassDeclaration,
+internal fun KSClassDeclaration.determineVersioningInfo(
     environment: SymbolProcessorEnvironment
 ): VersioningInfo? {
-    val baseInterface = declaration.superTypes
+    val baseInterface = this.superTypes
         .mapNotNull { it.resolve().declaration as? KSClassDeclaration }
         .firstOrNull {
             it.classKind == ClassKind.INTERFACE && !it.annotations.any { annotation ->
@@ -54,15 +53,15 @@ internal fun determineVersioningInfo(
             }
         }
         ?: return null
-    val explicitVersion = declaration.annotations
+    val explicitVersion = this.annotations
         .firstOrNull { it.isAnnotation(REPLICATE_SCHEMA_VERSION_ANNOTATION_NAME) }
         ?.arguments
         ?.firstOrNull { it.name?.asString() == SCHEMA_VERSION_ARG }
         ?.value as? Int
-    val inferredVersion = V_INT_REGEX.find(declaration.simpleName.asString())?.groupValues?.get(1)?.toIntOrNull()
+    val inferredVersion = V_INT_REGEX.find(this.simpleName.asString())?.groupValues?.get(1)?.toIntOrNull()
     val version = explicitVersion ?: inferredVersion ?: fail(
         environment,
-        "Versioned model '${declaration.simpleName.asString()}' must either be named 'V<N>' (e.g., V1) " +
+        "Versioned model '${this.simpleName.asString()}' must either be named 'V<N>' (e.g., V1) " +
                 "or be annotated with @SchemaVersion(number = N)."
     )
     return VersioningInfo(baseInterface.simpleName.asString(), version)
@@ -115,11 +114,11 @@ internal fun Sequence<KSAnnotation>.toAnnotationModels(
     mapNotNull { ksAnnotationToModel(it, frameworkDeclarations) }
         .toList()
 
-internal fun isNonHiddenModelAnnotation(declaration: KSClassDeclaration): Boolean {
-    val isHidden = declaration.annotations.any {
+internal fun KSClassDeclaration.isNonHiddenModelAnnotation(): Boolean {
+    val isHidden = this.annotations.any {
         it.annotationType.resolve().declaration.qualifiedName?.asString() == REPLICATE_HIDE_ANNOTATION_NAME
     }
-    return declaration.classKind == ClassKind.INTERFACE && !isHidden
+    return this.classKind == ClassKind.INTERFACE && !isHidden
 }
 
 internal fun getFrameworkDeclarations(resolver: Resolver): Set<KSClassDeclaration> {
@@ -136,9 +135,9 @@ internal fun getFrameworkDeclarations(resolver: Resolver): Set<KSClassDeclaratio
         .toSet()
 }
 
-internal fun isGeneratedVariantContainer(declaration: KSClassDeclaration?): Boolean {
-    if (declaration == null || Modifier.SEALED !in declaration.modifiers) return false
-    val nestedDecls = declaration.declarations
+internal fun KSClassDeclaration?.isGeneratedVariantContainer(): Boolean {
+    if (this == null || Modifier.SEALED !in this.modifiers) return false
+    val nestedDecls = this.declarations
         .filterIsInstance<KSClassDeclaration>()
         .map { it.simpleName.asString() }
         .toSet()

@@ -5,7 +5,7 @@ import com.google.devtools.ksp.processing.SymbolProcessorEnvironment
 import com.google.devtools.ksp.symbol.KSClassDeclaration
 import com.google.devtools.ksp.symbol.KSDeclaration
 import com.google.devtools.ksp.symbol.KSType
-import io.availe.helpers.*
+import io.availe.extensions.*
 import io.availe.models.*
 
 private fun parseApplyAnnotations(
@@ -86,7 +86,7 @@ internal fun buildModel(
     val annotationConfigs = parseApplyAnnotations(declaration, modelDtoVariants, environment)
     val modelAnnotations = declaration.annotations.toAnnotationModels(frameworkDeclarations)
 
-    val versioningInfo = determineVersioningInfo(declaration, environment)
+    val versioningInfo = declaration.determineVersioningInfo(environment)
     val properties = declaration.getAllProperties().map { property ->
         processProperty(
             property,
@@ -110,7 +110,7 @@ internal fun buildModel(
         properties.add(schemaVersionProperty)
     }
 
-    val allOptInMarkers = extractAllOptInMarkers(declaration)
+    val allOptInMarkers = declaration.extractAllOptInMarkers()
 
     return Model(
         name = declaration.simpleName.asString(),

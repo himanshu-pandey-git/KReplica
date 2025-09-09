@@ -1,4 +1,4 @@
-package io.availe.helpers
+package io.availe.extensions
 
 import com.google.devtools.ksp.processing.Resolver
 import com.google.devtools.ksp.symbol.KSClassDeclaration
@@ -7,15 +7,15 @@ import io.availe.models.INTRINSIC_SERIALIZABLES
 
 private val serializabilityCache = mutableMapOf<String, Boolean>()
 
-internal fun needsContextualSerializer(ksType: KSType, resolver: Resolver): Boolean {
-    val anyArgumentRequiresContextual = ksType.arguments.any {
-        it.type?.resolve()?.let { type -> needsContextualSerializer(type, resolver) } ?: false
+internal fun KSType.needsContextualSerializer(resolver: Resolver): Boolean {
+    val anyArgumentRequiresContextual = this.arguments.any {
+        it.type?.resolve()?.needsContextualSerializer(resolver) ?: false
     }
     if (anyArgumentRequiresContextual) {
         return true
     }
 
-    val declaration = ksType.declaration as? KSClassDeclaration ?: return false
+    val declaration = this.declaration as? KSClassDeclaration ?: return false
     val qualifiedName = declaration.qualifiedName?.asString() ?: return false
 
     if (INTRINSIC_SERIALIZABLES.contains(qualifiedName)) {
