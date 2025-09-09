@@ -7,7 +7,7 @@ import org.slf4j.LoggerFactory
 
 private val logger = LoggerFactory.getLogger("io.availe.utils.ValidateModels")
 
-fun validateModelReplications(allModels: List<Model>) {
+internal fun validateModelReplications(allModels: List<Model>) {
     val modelsByName = allModels.associateBy { it.name }
     val validationErrors = mutableListOf<String>()
     allModels.forEach { model ->

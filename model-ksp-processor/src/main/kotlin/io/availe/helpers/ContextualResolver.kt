@@ -7,7 +7,7 @@ import io.availe.models.INTRINSIC_SERIALIZABLES
 
 private val serializabilityCache = mutableMapOf<String, Boolean>()
 
-fun needsContextualSerializer(ksType: KSType, resolver: Resolver): Boolean {
+internal fun needsContextualSerializer(ksType: KSType, resolver: Resolver): Boolean {
     val anyArgumentRequiresContextual = ksType.arguments.any {
         it.type?.resolve()?.let { type -> needsContextualSerializer(type, resolver) } ?: false
     }

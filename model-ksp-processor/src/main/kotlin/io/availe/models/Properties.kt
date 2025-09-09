@@ -3,7 +3,7 @@ package io.availe.models
 import kotlinx.serialization.Serializable
 
 @Serializable
-sealed class Property {
+internal sealed class Property {
     abstract val name: String
     abstract val typeInfo: TypeInfo
     abstract val dtoVariants: Set<DtoVariant>
@@ -12,7 +12,7 @@ sealed class Property {
 }
 
 @Serializable
-data class RegularProperty(
+internal data class RegularProperty(
     override val name: String,
     override val typeInfo: TypeInfo,
     override val dtoVariants: Set<DtoVariant>,
@@ -21,7 +21,7 @@ data class RegularProperty(
 ) : Property()
 
 @Serializable
-data class ForeignProperty(
+internal data class ForeignProperty(
     override val name: String,
     override val typeInfo: TypeInfo,
     val foreignModelName: String,

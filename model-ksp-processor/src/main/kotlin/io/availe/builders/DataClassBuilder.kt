@@ -19,12 +19,11 @@ private fun getPatchableClassName(model: Model, dtoVariant: DtoVariant): ClassNa
     }
 }
 
-fun buildDataTransferObjectClass(
+internal fun buildDataTransferObjectClass(
     model: Model,
     properties: List<Property>,
     dtoVariant: DtoVariant,
-    modelsByName: Map<String, Model>,
-    coreInterfaceSpec: TypeSpec?
+    modelsByName: Map<String, Model>
 ): TypeSpec {
     val generatedClassName = dtoVariant.suffix
 
@@ -39,7 +38,7 @@ fun buildDataTransferObjectClass(
     }
 
     if (model.isVersionOf != null) {
-        val schemaName = model.isVersionOf!! + "Schema"
+        val schemaName = model.isVersionOf + "Schema"
         val versionInterface = ClassName(model.packageName, schemaName, model.name)
         typeSpecBuilder.addSuperinterface(versionInterface)
 

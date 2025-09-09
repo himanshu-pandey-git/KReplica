@@ -1,5 +1,6 @@
 package io.availe.gradle
 
+import com.google.devtools.ksp.gradle.KspExtension
 import io.availe.gradle.KReplicaModelAttribute.KREPLICA_MODEL_TYPE_ATTRIBUTE
 import io.availe.gradle.KReplicaModelAttribute.MODELS_JSON_TYPE
 import io.availe.models.KReplicaPaths
@@ -7,6 +8,7 @@ import org.gradle.api.Project
 import org.gradle.api.file.RegularFile
 import org.gradle.api.provider.Provider
 import org.jetbrains.kotlin.gradle.dsl.KotlinMultiplatformExtension
+import java.io.File
 
 fun applyKmpConvention(project: Project, projectVersion: String) {
     project.logger.info("--- KREPLICA-PLUGIN: Applying KMP Convention to ${project.path} ---")
@@ -18,7 +20,6 @@ fun applyKmpConvention(project: Project, projectVersion: String) {
     kmpExt.sourceSets.getByName("commonMain").dependencies {
         project.logger.info("--- KREPLICA-PLUGIN: Adding KReplica dependencies for KMP commonMain in ${project.path} ---")
         implementation("io.availe:model-ksp-annotations:$projectVersion")
-        implementation("io.availe:codegen-models:$projectVersion")
     }
 
     project.dependencies.apply {
@@ -44,5 +45,11 @@ fun applyKmpConvention(project: Project, projectVersion: String) {
         }
     }
 
-    registerKReplicaCodegenTask(project, "kspCommonMainKotlinMetadata", projectVersion, primaryModelJsonProvider)
+    val metadataConfig = project.configurations.getByName("kreplicaMetadata")
+    val metadataFilesProvider = project.provider {
+        metadataConfig.files.joinToString(File.pathSeparator)
+    }
+    project.extensions.configure(KspExtension::class.java) {
+        arg("kreplica.metadataFiles", metadataFilesProvider)
+    }
 }

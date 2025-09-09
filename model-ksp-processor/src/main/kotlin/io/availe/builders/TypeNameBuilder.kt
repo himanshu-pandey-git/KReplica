@@ -12,7 +12,12 @@ internal fun buildTypeNameWithContextual(
     isContainerSerializable: Boolean,
     autoContextualEnabled: Boolean
 ): TypeName {
-    return buildTypeNameRecursive(typeInfo, parentRequiresContext = false, isContainerSerializable, autoContextualEnabled)
+    return buildTypeNameRecursive(
+        typeInfo,
+        parentRequiresContext = false,
+        isContainerSerializable,
+        autoContextualEnabled
+    )
 }
 
 private fun buildTypeNameRecursive(
@@ -46,6 +51,6 @@ private fun buildTypeNameRecursive(
     return finalType.copy(nullable = typeInfo.isNullable)
 }
 
-fun TypeInfo.toTypeName(isContainerSerializable: Boolean, autoContextualEnabled: Boolean): TypeName {
+internal fun TypeInfo.toTypeName(isContainerSerializable: Boolean, autoContextualEnabled: Boolean): TypeName {
     return buildTypeNameWithContextual(this, isContainerSerializable, autoContextualEnabled)
 }

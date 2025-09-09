@@ -13,23 +13,12 @@ class KReplicaPlugin : Plugin<Project> {
 
         val projectVersion = "6.0.0"
 
-        val kreplicaClasspath = target.configurations.create("kreplicaClasspath") {
+        target.configurations.create("kreplicaMetadata") {
             isCanBeResolved = true
             isCanBeConsumed = false
             description = "Resolves models.json files from all project dependencies."
             attributes {
                 attribute(KREPLICA_MODEL_TYPE_ATTRIBUTE, MODELS_JSON_TYPE)
-            }
-        }
-
-        target.configurations.all {
-            val configName = this.name
-            if (configName.endsWith("implementation", ignoreCase = true) || configName.endsWith(
-                    "api",
-                    ignoreCase = true
-                )
-            ) {
-                kreplicaClasspath.extendsFrom(this)
             }
         }
 

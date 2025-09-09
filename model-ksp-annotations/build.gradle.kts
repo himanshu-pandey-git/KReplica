@@ -4,6 +4,7 @@ import org.jetbrains.kotlin.gradle.ExperimentalWasmDsl
 
 plugins {
     alias(libs.plugins.kotlinMultiplatform)
+    alias(libs.plugins.kotlin.serialization)
     `maven-publish`
 }
 
@@ -25,21 +26,10 @@ kotlin {
     }
 
     sourceSets {
-        val commonMain by getting {
+        commonMain {
             dependencies {
-                implementation(projects.codegenModels)
+                implementation(libs.kotlinx.serialization.json)
             }
         }
-
-        val jvmMain by getting {}
-
-        val iosX64Main by getting
-
-        val iosArm64Main by getting
-        val iosSimulatorArm64Main by getting
-        val wasmJsMain by getting
-        val linuxX64Main by getting
-        val macosX64Main by getting
-        val macosArm64Main by getting
     }
 }

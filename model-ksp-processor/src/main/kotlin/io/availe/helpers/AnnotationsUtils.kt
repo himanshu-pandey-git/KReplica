@@ -10,7 +10,6 @@ import io.availe.models.DtoVariant
 private val V_INT_REGEX = Regex("^V(\\d+)$")
 
 internal fun fail(environment: SymbolProcessorEnvironment, message: String): Nothing {
-    environment.logger.error(message)
     error(message)
 }
 
@@ -110,7 +109,7 @@ private fun ksAnnotationToModel(
 }
 
 
-fun Sequence<KSAnnotation>.toAnnotationModels(
+internal fun Sequence<KSAnnotation>.toAnnotationModels(
     frameworkDeclarations: Set<KSClassDeclaration>
 ): List<AnnotationModel> =
     mapNotNull { ksAnnotationToModel(it, frameworkDeclarations) }

@@ -22,13 +22,6 @@ internal fun generateStubs(declarations: List<KSClassDeclaration>, env: SymbolPr
     }
 }
 
-private fun String.asClassName(): ClassName {
-    val cleanName = this.substringBefore('<').removeSuffix("?")
-    val packageName = cleanName.substringBeforeLast('.')
-    val simpleName = cleanName.substringAfterLast('.')
-    return ClassName(packageName, simpleName)
-}
-
 private fun createStubFileFor(baseName: String, versions: List<KSClassDeclaration>, env: SymbolProcessorEnvironment) {
     val representativeModel = versions.first()
     val packageName = representativeModel.packageName.asString()
@@ -52,7 +45,7 @@ private fun createStubFileFor(baseName: String, versions: List<KSClassDeclaratio
 
     if (isVersioned) {
         versions.forEach { versionDecl ->
-            val versionInfo = determineVersioningInfo(versionDecl, env)
+            determineVersioningInfo(versionDecl, env)
                 ?: error("Could not determine version info for ${versionDecl.simpleName.asString()}")
             val versionClassName = schemaClassName.nestedClass(versionDecl.simpleName.asString())
             val isVersionSerializable = isModelSerializable(versionDecl)

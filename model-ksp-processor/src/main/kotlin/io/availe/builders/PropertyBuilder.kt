@@ -14,6 +14,7 @@ internal fun processProperty(
     modelAutoContextual: AutoContextual,
     resolver: Resolver,
     frameworkDeclarations: Set<KSClassDeclaration>,
+    annotationContext: KReplicaAnnotationContext,
     environment: SymbolProcessorEnvironment
 ): Property {
     if (propertyDeclaration.isMutable) {
@@ -61,6 +62,31 @@ internal fun processProperty(
     }
 
     val ksType = propertyDeclaration.type.resolve()
+
+    when (val validationResult = validateKReplicaTypeUsage(ksType, annotationContext)) {
+        is Invalid -> {
+            val propertyName = propertyDeclaration.simpleName.asString()
+            val parentInterfaceName =
+                (propertyDeclaration.parent as? KSClassDeclaration)?.qualifiedName?.asString() ?: "Unknown Interface"
+            val offendingModelName = validationResult.offendingDeclaration.simpleName.asString()
+            val suggestedSchemaName = offendingModelName + "Schema"
+
+            fail(
+                environment,
+                """
+                KReplica Validation Error in '$parentInterfaceName':
+                Property '$propertyName' has an invalid type signature: '${validationResult.fullTypeName}'.
+                The type '$offendingModelName' is a KReplica model interface and cannot be used directly.
+                
+                To fix this, replace '$offendingModelName' with the generated schema: '$suggestedSchemaName'.
+                """.trimIndent()
+            )
+        }
+
+        is Valid -> { /* Continue processing */
+        }
+    }
+
     val typeInfo = KSTypeInfo.from(ksType, environment, resolver).toModelTypeInfo()
     val propertyAnnotations: List<AnnotationModel> =
         propertyDeclaration.annotations.toAnnotationModels(frameworkDeclarations)
@@ -68,28 +94,6 @@ internal fun processProperty(
     val foreignDecl = resolver.getClassDeclarationByName(
         resolver.getKSNameFromString(typeInfo.qualifiedName)
     )
-    val isSourceForeignModel = foreignDecl?.annotations?.any { it.isAnnotation(MODEL_ANNOTATION_NAME) } == true
-
-    if (isSourceForeignModel) {
-        val propertyName = propertyDeclaration.simpleName.asString()
-        val sourceInterfaceName = typeInfo.qualifiedName
-        val parentInterfaceName =
-            (propertyDeclaration.parent as? KSClassDeclaration)?.qualifiedName?.asString() ?: "Unknown Interface"
-        val suggestedSchemaName = sourceInterfaceName + "Schema"
-
-        fail(
-            environment,
-            """
-            KReplica Validation Error in '$parentInterfaceName':
-            Property '$propertyName' references the KReplica model interface '$sourceInterfaceName'.
-            You must use the generated schema `${suggestedSchemaName}Schema` instead.
-            
-
-            Please change the property type from `$propertyName` to '${propertyName}Schema'.
-            """.trimIndent()
-        )
-    }
-
     val isGeneratedForeignModel = isGeneratedVariantContainer(foreignDecl)
 
     environment.logger.logging(

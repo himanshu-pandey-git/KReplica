@@ -11,7 +11,7 @@ kotlin {
 
 gradlePlugin {
     plugins {
-        create("kreplica") {
+        register("kreplica") {
             id = "io.availe.kreplica"
             implementationClass = "io.availe.KReplicaPlugin"
         }
@@ -19,9 +19,7 @@ gradlePlugin {
 }
 
 dependencies {
-    implementation(projects.codegenModels)
     implementation(projects.modelKspProcessor)
-    implementation(projects.codegenRuntime)
     implementation(projects.modelKspAnnotations)
     compileOnly(libs.kotlin.gradle.plugin)
     compileOnly(libs.kotlin.gradle.plugin.api)

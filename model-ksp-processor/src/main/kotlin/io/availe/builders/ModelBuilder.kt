@@ -52,6 +52,7 @@ internal fun buildModel(
     declaration: KSClassDeclaration,
     resolver: Resolver,
     frameworkDeclarations: Set<KSClassDeclaration>,
+    annotationContext: KReplicaAnnotationContext,
     environment: SymbolProcessorEnvironment
 ): Model {
     val modelAnnotation = declaration.annotations.first { it.isAnnotation(MODEL_ANNOTATION_NAME) }
@@ -87,7 +88,15 @@ internal fun buildModel(
 
     val versioningInfo = determineVersioningInfo(declaration, environment)
     val properties = declaration.getAllProperties().map { property ->
-        processProperty(property, modelDtoVariants, modelAutoContextual, resolver, frameworkDeclarations, environment)
+        processProperty(
+            property,
+            modelDtoVariants,
+            modelAutoContextual,
+            resolver,
+            frameworkDeclarations,
+            annotationContext,
+            environment
+        )
     }.toMutableList()
 
     if (versioningInfo != null && properties.none { it.name == SCHEMA_VERSION_FIELD }) {

@@ -3,13 +3,13 @@ package io.availe.models
 import kotlinx.serialization.Serializable
 
 @Serializable
-data class AnnotationConfigModel(
+internal data class AnnotationConfigModel(
     val annotation: AnnotationModel,
     val variants: Set<DtoVariant>
 )
 
 @Serializable
-data class Model(
+internal data class Model(
     val name: String,
     val packageName: String,
     val properties: List<Property>,

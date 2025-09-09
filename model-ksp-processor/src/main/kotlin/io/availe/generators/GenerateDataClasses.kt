@@ -1,5 +1,7 @@
 package io.availe.generators
 
+import com.google.devtools.ksp.processing.CodeGenerator
+import com.google.devtools.ksp.processing.Dependencies
 import com.squareup.kotlinpoet.*
 import com.squareup.kotlinpoet.ParameterizedTypeName.Companion.parameterizedBy
 import io.availe.SCHEMA_SUFFIX
@@ -8,15 +10,19 @@ import io.availe.builders.*
 import io.availe.models.*
 import io.availe.utils.fieldsFor
 import org.slf4j.LoggerFactory
-import java.io.File
 
 private val logger = LoggerFactory.getLogger("io.availe.generators")
 
-fun generateDataClasses(primaryModels: List<Model>, allModels: List<Model>, outputDir: File) {
+internal fun generateDataClasses(
+    primaryModels: List<Model>,
+    allModels: List<Model>,
+    codeGenerator: CodeGenerator,
+    dependencies: Dependencies
+) {
     val modelsByName = allModels.associateBy { it.name }
     val primaryModelsByBaseName = primaryModels.groupBy { it.isVersionOf ?: it.name }
     primaryModelsByBaseName.forEach { (baseName, versions) ->
-        generateSchemaFile(baseName, versions, modelsByName, outputDir)
+        generateSchemaFile(baseName, versions, modelsByName, codeGenerator, dependencies)
     }
 }
 
@@ -24,7 +30,8 @@ private fun generateSchemaFile(
     baseName: String,
     versions: List<Model>,
     modelsByName: Map<String, Model>,
-    outputDir: File
+    codeGenerator: CodeGenerator,
+    dependencies: Dependencies
 ) {
     val isVersioned = versions.first().isVersionOf != null
     val representativeModel = versions.first()
@@ -112,7 +119,7 @@ private fun generateSchemaFile(
         }
         fileBuilder.addType(schemaBuilder.build())
     }
-    fileBuilder.build().writeTo(outputDir)
+    overwriteFile(fileBuilder.build(), codeGenerator, dependencies)
 }
 
 private fun generateDataTransferObjects(
@@ -126,8 +133,7 @@ private fun generateDataTransferObjects(
                 model = model,
                 properties = fields,
                 dtoVariant = variant,
-                modelsByName = modelsByName,
-                coreInterfaceSpec = null
+                modelsByName = modelsByName
             )
         } else null
     }

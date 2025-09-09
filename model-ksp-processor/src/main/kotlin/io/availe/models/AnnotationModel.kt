@@ -3,13 +3,13 @@ package io.availe.models
 import kotlinx.serialization.Serializable
 
 @Serializable
-data class AnnotationModel(
+internal data class AnnotationModel(
     val qualifiedName: String,
     val arguments: Map<String, AnnotationArgument> = emptyMap()
 )
 
 @Serializable
-sealed class AnnotationArgument {
+internal sealed class AnnotationArgument {
     @Serializable
     data class StringValue(val value: String) : AnnotationArgument()
 

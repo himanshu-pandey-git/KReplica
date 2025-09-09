@@ -1,6 +1,6 @@
 package io.availe.models
 
-val INTRINSIC_SERIALIZABLES: Set<String> = setOf(
+internal val INTRINSIC_SERIALIZABLES: Set<String> = setOf(
     "kotlin.String",
     "kotlin.Char",
     "kotlin.Boolean",
