@@ -2,12 +2,10 @@ package io.availe.helpers
 
 import com.google.devtools.ksp.processing.Resolver
 import com.google.devtools.ksp.processing.SymbolProcessorEnvironment
-import com.google.devtools.ksp.symbol.ClassKind
-import com.google.devtools.ksp.symbol.KSAnnotation
-import com.google.devtools.ksp.symbol.KSClassDeclaration
-import com.google.devtools.ksp.symbol.KSType
+import com.google.devtools.ksp.symbol.*
 import io.availe.models.AnnotationArgument
 import io.availe.models.AnnotationModel
+import io.availe.models.DtoVariant
 
 private val V_INT_REGEX = Regex("^V(\\d+)$")
 
@@ -137,4 +135,13 @@ internal fun getFrameworkDeclarations(resolver: Resolver): Set<KSClassDeclaratio
             resolver.getClassDeclarationByName(resolver.getKSNameFromString(fullyQualifiedName))
         }
         .toSet()
+}
+
+internal fun isGeneratedVariantContainer(declaration: KSClassDeclaration?): Boolean {
+    if (declaration == null || Modifier.SEALED !in declaration.modifiers) return false
+    val nestedDecls = declaration.declarations
+        .filterIsInstance<KSClassDeclaration>()
+        .map { it.simpleName.asString() }
+        .toSet()
+    return DtoVariant.entries.all { it.suffix in nestedDecls }
 }

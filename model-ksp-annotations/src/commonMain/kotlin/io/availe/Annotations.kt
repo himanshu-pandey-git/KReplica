@@ -2,14 +2,12 @@ package io.availe
 
 import io.availe.models.AutoContextual
 import io.availe.models.DtoVariant
-import io.availe.models.NominalTyping
 import kotlin.reflect.KClass
 
 object Replicate {
     @Target(AnnotationTarget.CLASS)
     annotation class Model(
         val variants: Array<DtoVariant>,
-        val nominalTyping: NominalTyping = NominalTyping.DISABLED,
         val autoContextual: AutoContextual = AutoContextual.ENABLED
     )
 
@@ -17,7 +15,6 @@ object Replicate {
     annotation class Property(
         val exclude: Array<DtoVariant> = [],
         val include: Array<DtoVariant> = [],
-        val nominalTyping: NominalTyping = NominalTyping.INHERIT,
         val autoContextual: AutoContextual = AutoContextual.INHERIT
     )
 

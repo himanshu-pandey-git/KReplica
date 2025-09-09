@@ -19,7 +19,6 @@ data class Model(
     val optInMarkers: List<String> = emptyList(),
     val isVersionOf: String? = null,
     val schemaVersion: Int? = null,
-    val nominalTyping: NominalTyping,
     val autoContextual: AutoContextual = AutoContextual.ENABLED
 ) {
     init {

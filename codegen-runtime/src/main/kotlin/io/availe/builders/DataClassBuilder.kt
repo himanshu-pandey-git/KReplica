@@ -23,8 +23,6 @@ fun buildDataTransferObjectClass(
     model: Model,
     properties: List<Property>,
     dtoVariant: DtoVariant,
-    valueClassNames: Map<Pair<String, String>, String>,
-    existingValueClasses: Set<String>,
     modelsByName: Map<String, Model>,
     coreInterfaceSpec: TypeSpec?
 ): TypeSpec {
@@ -65,8 +63,6 @@ fun buildDataTransferObjectClass(
                 property,
                 dtoVariant,
                 model,
-                valueClassNames,
-                existingValueClasses,
                 modelsByName,
                 isContainerSerializable = isSerializable
             )
@@ -75,11 +71,7 @@ fun buildDataTransferObjectClass(
 
         var annotationsToApply = property.annotations
 
-        val isWrappedInValueClass = (property.nominalTyping == NominalTyping.ENABLED &&
-                !propertyShouldSkipWrapping(property, existingValueClasses) &&
-                property is RegularProperty)
-
-        val shouldFilterContextual = (dtoVariant == DtoVariant.PATCH) || isWrappedInValueClass
+        val shouldFilterContextual = (dtoVariant == DtoVariant.PATCH)
 
         if (shouldFilterContextual) {
             annotationsToApply =
@@ -93,15 +85,7 @@ fun buildDataTransferObjectClass(
         }
 
         if (property.name == SCHEMA_VERSION_PROPERTY_NAME && dtoVariant != DtoVariant.PATCH) {
-            val isWrapped = (property.nominalTyping == NominalTyping.ENABLED &&
-                    !propertyShouldSkipWrapping(property, existingValueClasses) &&
-                    property is RegularProperty)
-
-            if (isWrapped) {
-                paramBuilder.defaultValue("%T(%L)", typeName, model.schemaVersion)
-            } else {
-                paramBuilder.defaultValue("%L", model.schemaVersion)
-            }
+            paramBuilder.defaultValue("%L", model.schemaVersion)
         }
 
         if (dtoVariant == DtoVariant.PATCH) {

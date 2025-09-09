@@ -5,23 +5,12 @@ import com.google.devtools.ksp.processing.SymbolProcessorEnvironment
 import com.google.devtools.ksp.symbol.KSClassDeclaration
 import com.google.devtools.ksp.symbol.KSDeclaration
 import com.google.devtools.ksp.symbol.KSPropertyDeclaration
-import com.google.devtools.ksp.symbol.Modifier
 import io.availe.helpers.*
 import io.availe.models.*
-
-private fun isGeneratedVariantContainer(declaration: KSClassDeclaration?): Boolean {
-    if (declaration == null || Modifier.SEALED !in declaration.modifiers) return false
-    val nestedDecls = declaration.declarations
-        .filterIsInstance<KSClassDeclaration>()
-        .map { it.simpleName.asString() }
-        .toSet()
-    return DtoVariant.entries.all { it.suffix in nestedDecls }
-}
 
 internal fun processProperty(
     propertyDeclaration: KSPropertyDeclaration,
     modelDtoVariants: Set<DtoVariant>,
-    modelNominalTyping: NominalTyping,
     modelAutoContextual: AutoContextual,
     resolver: Resolver,
     frameworkDeclarations: Set<KSClassDeclaration>,
@@ -49,24 +38,16 @@ internal fun processProperty(
         val includeArg = fieldAnnotation.arguments.find { it.name?.asString() == "include" }?.value as? List<*>
         val excludeArg = fieldAnnotation.arguments.find { it.name?.asString() == "exclude" }?.value as? List<*>
 
-        val include = includeArg?.map { DtoVariant.valueOf((it as KSDeclaration).simpleName.asString()) }?.toSet() ?: emptySet()
-        val exclude = excludeArg?.map { DtoVariant.valueOf((it as KSDeclaration).simpleName.asString()) }?.toSet() ?: emptySet()
+        val include =
+            includeArg?.map { DtoVariant.valueOf((it as KSDeclaration).simpleName.asString()) }?.toSet() ?: emptySet()
+        val exclude =
+            excludeArg?.map { DtoVariant.valueOf((it as KSDeclaration).simpleName.asString()) }?.toSet() ?: emptySet()
 
         when {
             include.isNotEmpty() -> include
             exclude.isNotEmpty() -> modelDtoVariants - exclude
             else -> modelDtoVariants
         }
-    }
-
-    val propertyNominalTyping = fieldAnnotation?.arguments
-        ?.find { it.name?.asString() == "nominalTyping" }
-        ?.let { NominalTyping.valueOf((it.value as KSDeclaration).simpleName.asString()) }
-
-    val finalNominalTyping = if (propertyNominalTyping != null && propertyNominalTyping != NominalTyping.INHERIT) {
-        propertyNominalTyping
-    } else {
-        modelNominalTyping
     }
 
     val propertyAutoContextual = fieldAnnotation?.arguments
@@ -88,22 +69,41 @@ internal fun processProperty(
         resolver.getKSNameFromString(typeInfo.qualifiedName)
     )
     val isSourceForeignModel = foreignDecl?.annotations?.any { it.isAnnotation(MODEL_ANNOTATION_NAME) } == true
+
+    if (isSourceForeignModel) {
+        val propertyName = propertyDeclaration.simpleName.asString()
+        val sourceInterfaceName = typeInfo.qualifiedName
+        val parentInterfaceName =
+            (propertyDeclaration.parent as? KSClassDeclaration)?.qualifiedName?.asString() ?: "Unknown Interface"
+        val suggestedSchemaName = sourceInterfaceName + "Schema"
+
+        fail(
+            environment,
+            """
+            KReplica Validation Error in '$parentInterfaceName':
+            Property '$propertyName' references the KReplica model interface '$sourceInterfaceName'.
+            You must use the generated schema `${suggestedSchemaName}Schema` instead.
+            
+
+            Please change the property type from `$propertyName` to '${propertyName}Schema'.
+            """.trimIndent()
+        )
+    }
+
     val isGeneratedForeignModel = isGeneratedVariantContainer(foreignDecl)
-    val isForeignModel = isSourceForeignModel || isGeneratedForeignModel
 
     environment.logger.logging(
         "processProperty name=${propertyDeclaration.simpleName.asString()} " +
-                "qualified=${typeInfo.qualifiedName} isValueClass=${typeInfo.isValueClass} foreign=$isForeignModel"
+                "qualified=${typeInfo.qualifiedName} isValueClass=${typeInfo.isValueClass} foreign=$isGeneratedForeignModel"
     )
 
-    return if (isForeignModel && foreignDecl != null) {
+    return if (isGeneratedForeignModel && foreignDecl != null) {
         createForeignProperty(
             propertyDeclaration,
             typeInfo,
             foreignDecl,
             propertyVariants,
             propertyAnnotations,
-            finalNominalTyping,
             finalAutoContextual
         )
     } else {
@@ -112,7 +112,6 @@ internal fun processProperty(
             typeInfo = typeInfo,
             dtoVariants = propertyVariants,
             annotations = propertyAnnotations,
-            nominalTyping = finalNominalTyping,
             autoContextual = finalAutoContextual
         )
     }
@@ -124,7 +123,6 @@ private fun createForeignProperty(
     foreignModelDeclaration: KSClassDeclaration,
     dtoVariants: Set<DtoVariant>,
     annotations: List<AnnotationModel>,
-    nominalTyping: NominalTyping,
     autoContextual: AutoContextual
 ): ForeignProperty {
     val simpleName = foreignModelDeclaration.simpleName.asString()
@@ -139,7 +137,6 @@ private fun createForeignProperty(
         foreignModelName = foreignModelNameForLookup,
         dtoVariants = dtoVariants,
         annotations = annotations,
-        nominalTyping = nominalTyping,
         autoContextual = autoContextual
     )
 }

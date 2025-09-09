@@ -69,19 +69,6 @@ internal fun buildModel(
         }.toSet()
     }
 
-    val modelNominalTyping = modelAnnotation.arguments
-        .find { it.name?.asString() == "nominalTyping" }
-        ?.let { NominalTyping.valueOf((it.value as KSDeclaration).simpleName.asString()) }
-        ?: NominalTyping.DISABLED
-
-    if (modelNominalTyping == NominalTyping.INHERIT) {
-        fail(
-            environment,
-            "Model '${declaration.simpleName.asString()}' cannot use nominalTyping = INHERIT. " +
-                    "Please specify ENABLED or DISABLED."
-        )
-    }
-
     val modelAutoContextual = modelAnnotation.arguments
         .find { it.name?.asString() == "autoContextual" }
         ?.let { AutoContextual.valueOf((it.value as KSDeclaration).simpleName.asString()) }
@@ -100,7 +87,7 @@ internal fun buildModel(
 
     val versioningInfo = determineVersioningInfo(declaration, environment)
     val properties = declaration.getAllProperties().map { property ->
-        processProperty(property, modelDtoVariants, modelNominalTyping, modelAutoContextual, resolver, frameworkDeclarations, environment)
+        processProperty(property, modelDtoVariants, modelAutoContextual, resolver, frameworkDeclarations, environment)
     }.toMutableList()
 
     if (versioningInfo != null && properties.none { it.name == SCHEMA_VERSION_FIELD }) {
@@ -109,7 +96,6 @@ internal fun buildModel(
             typeInfo = TypeInfo("kotlin.Int", isNullable = false),
             dtoVariants = modelDtoVariants,
             annotations = emptyList(),
-            nominalTyping = modelNominalTyping,
             autoContextual = modelAutoContextual
         )
         properties.add(schemaVersionProperty)
@@ -127,7 +113,6 @@ internal fun buildModel(
         optInMarkers = allOptInMarkers,
         isVersionOf = versioningInfo?.baseModelName,
         schemaVersion = versioningInfo?.schemaVersion,
-        nominalTyping = modelNominalTyping,
         autoContextual = modelAutoContextual
     )
 }

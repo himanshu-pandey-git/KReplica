@@ -6,19 +6,10 @@ import com.squareup.kotlinpoet.TypeName
 import io.availe.SERIALIZABLE_PATCHABLE_CLASS_NAME
 import io.availe.models.*
 
-internal fun propertyShouldSkipWrapping(property: Property, existingValueClasses: Set<String>): Boolean {
-    return property.typeInfo.isEnum ||
-            property.typeInfo.isValueClass ||
-            property.typeInfo.isDataClass ||
-            existingValueClasses.contains(property.typeInfo.qualifiedName)
-}
-
 internal fun resolveTypeNameForProperty(
     property: Property,
     dtoVariant: DtoVariant,
     model: Model,
-    valueClassNames: Map<Pair<String, String>, String>,
-    existingValueClasses: Set<String>,
     modelsByName: Map<String, Model>,
     isContainerSerializable: Boolean
 ): TypeName {
@@ -33,15 +24,7 @@ internal fun resolveTypeNameForProperty(
     val baseType = if (property is ForeignProperty) {
         buildRecursiveDtoTypeName(property.typeInfo, dtoVariant, modelsByName, isContainerSerializable)
     } else {
-        val useWrapping = property.nominalTyping == NominalTyping.ENABLED
-        val skipWrapping = propertyShouldSkipWrapping(property, existingValueClasses)
-        if (useWrapping && !skipWrapping) {
-            valueClassNames[model.name to property.name]?.let { vcName ->
-                ClassName(model.packageName, vcName)
-            } ?: buildTypeNameWithContextual(property.typeInfo, isContainerSerializable, finalAutoContextualEnabled)
-        } else {
-            buildTypeNameWithContextual(property.typeInfo, isContainerSerializable, finalAutoContextualEnabled)
-        }
+        buildTypeNameWithContextual(property.typeInfo, isContainerSerializable, finalAutoContextualEnabled)
     }
 
     if (dtoVariant == DtoVariant.PATCH) {
