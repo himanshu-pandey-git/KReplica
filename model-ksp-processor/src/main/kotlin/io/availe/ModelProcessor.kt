@@ -24,7 +24,6 @@ private val jsonPrettyPrinter = Json { prettyPrint = true }
 
 internal class ModelProcessor(private val env: SymbolProcessorEnvironment) : SymbolProcessor {
     private val state = ProcessingState()
-    private typealias Round = ProcessingState.ProcessingRound
 
     private fun loadModelsFromOtherModules() {
         val metadataPaths = env.options["kreplica.metadataFiles"]?.split(File.pathSeparator)
@@ -55,8 +54,8 @@ internal class ModelProcessor(private val env: SymbolProcessorEnvironment) : Sym
         }
 
         return when (state.round) {
-            Round.FIRST -> processStubs(resolver)
-            Round.SECOND -> processModels(resolver)
+            ProcessingState.ProcessingRound.FIRST -> processStubs(resolver)
+            ProcessingState.ProcessingRound.SECOND -> processModels(resolver)
         }
     }
 
@@ -71,7 +70,7 @@ internal class ModelProcessor(private val env: SymbolProcessorEnvironment) : Sym
             generateStubs(modelSymbols, env)
         }
 
-        state.round = Round.SECOND
+        state.round = ProcessingState.ProcessingRound.SECOND
         return modelSymbols
     }
 

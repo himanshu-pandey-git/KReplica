@@ -22,6 +22,3 @@ dependencies {
     implementation(libs.kotlinx.datetime)
 }
 val compileKotlin: KotlinCompile by tasks
-compileKotlin.compilerOptions {
-    freeCompilerArgs.set(listOf("-Xnested-type-aliases"))
-}
