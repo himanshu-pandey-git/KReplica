@@ -12,7 +12,6 @@ import io.availe.extensions.KReplicaAnnotationContext
 import io.availe.extensions.MODEL_ANNOTATION_NAME
 import io.availe.extensions.getFrameworkDeclarations
 import io.availe.extensions.isNonHiddenModelAnnotation
-import io.availe.gradle.KReplicaArgs
 import io.availe.models.KReplicaPaths
 import io.availe.models.Model
 import kotlinx.serialization.json.Json
@@ -28,7 +27,7 @@ internal class ModelProcessor(private val env: SymbolProcessorEnvironment) : Sym
     private typealias Round = ProcessingState.ProcessingRound
 
     private fun loadModelsFromOtherModules() {
-        val metadataPaths = env.options[KReplicaArgs.METADATA_FILES]?.split(File.pathSeparator)
+        val metadataPaths = env.options["kreplica.metadataFiles"]?.split(File.pathSeparator)
             ?.filter { it.isNotBlank() } ?: emptyList()
 
         val loadedModels = metadataPaths

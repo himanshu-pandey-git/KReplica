@@ -45,6 +45,6 @@ fun applyJvmConvention(project: Project, projectVersion: String) {
         metadataConfig.files.joinToString(File.pathSeparator)
     }
     project.extensions.configure(KspExtension::class.java) {
-        arg(KReplicaArgs.METADATA_FILES, metadataFilesProvider)
+        arg("kreplica.metadataFiles", metadataFilesProvider)
     }
 }

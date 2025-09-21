@@ -12,7 +12,6 @@ kotlin {
 
 dependencies {
     implementation(projects.modelKspAnnotations)
-    implementation(projects.gradlePlugin)
     implementation(libs.kotlinpoet)
     implementation(libs.kotlinpoet.metadata)
     implementation(libs.kotlinpoet.metadata.specs)
