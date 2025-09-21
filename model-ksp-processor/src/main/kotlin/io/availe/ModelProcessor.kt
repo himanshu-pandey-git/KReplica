@@ -27,7 +27,7 @@ internal class ModelProcessor(private val env: SymbolProcessorEnvironment) : Sym
     private val state = ProcessingState()
     private typealias Round = ProcessingState.ProcessingRound
 
-    private fun initialize() {
+    private fun loadModelsFromOtherModules() {
         val metadataPaths = env.options[KReplicaArgs.METADATA_FILES]?.split(File.pathSeparator)
             ?.filter { it.isNotBlank() } ?: emptyList()
 
@@ -52,7 +52,7 @@ internal class ModelProcessor(private val env: SymbolProcessorEnvironment) : Sym
 
     override fun process(resolver: Resolver): List<KSAnnotated> {
         if (!state.initialized) {
-            initialize()
+            loadModelsFromOtherModules()
         }
 
         return when (state.round) {
