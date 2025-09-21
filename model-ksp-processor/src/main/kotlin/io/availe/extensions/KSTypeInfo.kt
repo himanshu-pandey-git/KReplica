@@ -46,7 +46,7 @@ internal data class KSTypeInfo(
             }
             val isValue = isValueByModifier || isValueByAnnotation
 
-            environment.logger.logging("KSTypeInfo.from qualifiedName=$qualified isEnum=$isEnum isValueClass=$isValue isDataClass=$isData")
+            environment.logger.info("KSTypeInfo.from qualifiedName=$qualified isEnum=$isEnum isValueClass=$isValue isDataClass=$isData")
             return KSTypeInfo(qualified, args, nullable, isEnum, isValue, isData, needsContextual)
         }
     }

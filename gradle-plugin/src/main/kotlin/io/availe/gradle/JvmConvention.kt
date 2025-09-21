@@ -11,15 +11,12 @@ import org.jetbrains.kotlin.gradle.dsl.KotlinProjectExtension
 import java.io.File
 
 fun applyJvmConvention(project: Project, projectVersion: String) {
-    project.logger.info("--- KREPLICA-PLUGIN: Applying JVM Convention to ${project.path} ---")
-
     val kotlinPoetOutputDir = project.layout.buildDirectory.dir(KReplicaPaths.KOTLIN_POET_GENERATED_DIR)
     project.extensions.getByType(KotlinProjectExtension::class.java).sourceSets.getByName("main").kotlin.srcDir(
         kotlinPoetOutputDir
     )
 
     project.dependencies.apply {
-        project.logger.info("--- KREPLICA-PLUGIN: Adding KReplica dependencies for JVM project ${project.path} ---")
         add("implementation", "io.availe:model-ksp-annotations:$projectVersion")
         add("ksp", "io.availe:model-ksp-processor:$projectVersion")
     }
@@ -48,6 +45,6 @@ fun applyJvmConvention(project: Project, projectVersion: String) {
         metadataConfig.files.joinToString(File.pathSeparator)
     }
     project.extensions.configure(KspExtension::class.java) {
-        arg("kreplica.metadataFiles", metadataFilesProvider)
+        arg(KReplicaArgs.METADATA_FILES, metadataFilesProvider)
     }
 }

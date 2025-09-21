@@ -1,3 +1,5 @@
+import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
+
 plugins {
     alias(libs.plugins.kotlinJvm)
     alias(libs.plugins.kotlin.serialization)
@@ -10,6 +12,7 @@ kotlin {
 
 dependencies {
     implementation(projects.modelKspAnnotations)
+    implementation(projects.gradlePlugin)
     implementation(libs.kotlinpoet)
     implementation(libs.kotlinpoet.metadata)
     implementation(libs.kotlinpoet.metadata.specs)
@@ -18,4 +21,8 @@ dependencies {
     implementation(libs.kotlinx.serialization.json)
     implementation(libs.logback)
     implementation(libs.kotlinx.datetime)
+}
+val compileKotlin: KotlinCompile by tasks
+compileKotlin.compilerOptions {
+    freeCompilerArgs.set(listOf("-Xnested-type-aliases"))
 }

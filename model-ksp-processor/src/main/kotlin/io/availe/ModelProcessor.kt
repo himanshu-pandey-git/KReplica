@@ -12,6 +12,7 @@ import io.availe.extensions.KReplicaAnnotationContext
 import io.availe.extensions.MODEL_ANNOTATION_NAME
 import io.availe.extensions.getFrameworkDeclarations
 import io.availe.extensions.isNonHiddenModelAnnotation
+import io.availe.gradle.KReplicaArgs
 import io.availe.models.KReplicaPaths
 import io.availe.models.Model
 import kotlinx.serialization.json.Json
@@ -23,23 +24,12 @@ private val jsonParser = Json { ignoreUnknownKeys = true }
 private val jsonPrettyPrinter = Json { prettyPrint = true }
 
 internal class ModelProcessor(private val env: SymbolProcessorEnvironment) : SymbolProcessor {
-    private val builtModels = mutableListOf<Model>()
-    private val sourceSymbols = mutableSetOf<KSClassDeclaration>()
-    private var round = ProcessingRound.FIRST
-    private val upstreamModels = mutableListOf<Model>()
-    private var initialized = false
-
-    private enum class ProcessingRound {
-        FIRST, SECOND
-    }
+    private val state = ProcessingState()
+    private typealias Round = ProcessingState.ProcessingRound
 
     private fun initialize() {
-        val metadataPaths = env.options["kreplica.metadataFiles"]?.split(File.pathSeparator)
+        val metadataPaths = env.options[KReplicaArgs.METADATA_FILES]?.split(File.pathSeparator)
             ?.filter { it.isNotBlank() } ?: emptyList()
-
-        if (metadataPaths.isNotEmpty()) {
-            env.logger.info("--- KREPLICA-KSP: Loading metadata from ${metadataPaths.size} upstream files. ---")
-        }
 
         val loadedModels = metadataPaths
             .map { path -> File(path) }
@@ -50,24 +40,24 @@ internal class ModelProcessor(private val env: SymbolProcessorEnvironment) : Sym
                         jsonParser.decodeFromString<List<Model>>(jsonFile.readText())
                     } catch (e: Exception) {
                         env.logger.error("--- KREPLICA-KSP: Failed to parse metadata file: ${jsonFile.absolutePath} ---\n${e.stackTraceToString()}")
-                        emptyList<Model>()
+                        emptyList()
                     }
                 } else {
-                    emptyList<Model>()
+                    emptyList()
                 }
             }
-        upstreamModels.addAll(loadedModels)
-        initialized = true
+        state.upstreamModels.addAll(loadedModels)
+        state.initialized = true
     }
 
     override fun process(resolver: Resolver): List<KSAnnotated> {
-        if (!initialized) {
+        if (!state.initialized) {
             initialize()
         }
 
-        return when (round) {
-            ProcessingRound.FIRST -> processStubs(resolver)
-            ProcessingRound.SECOND -> processModels(resolver)
+        return when (state.round) {
+            Round.FIRST -> processStubs(resolver)
+            Round.SECOND -> processModels(resolver)
         }
     }
 
@@ -82,7 +72,7 @@ internal class ModelProcessor(private val env: SymbolProcessorEnvironment) : Sym
             generateStubs(modelSymbols, env)
         }
 
-        round = ProcessingRound.SECOND
+        state.round = Round.SECOND
         return modelSymbols
     }
 
@@ -102,23 +92,23 @@ internal class ModelProcessor(private val env: SymbolProcessorEnvironment) : Sym
         val builtModels = modelSymbols.map { decl ->
             buildModel(decl, resolver, frameworkDecls, annotationContext, env)
         }
-        this.builtModels.addAll(builtModels)
-        this.sourceSymbols.addAll(modelSymbols)
+        this.state.builtModels.addAll(builtModels)
+        this.state.sourceSymbols.addAll(modelSymbols)
         return emptyList()
     }
 
     override fun finish() {
-        if (builtModels.isEmpty()) {
+        if (state.builtModels.isEmpty()) {
             return
         }
 
         try {
-            val allKnownModels = (this.upstreamModels + this.builtModels).distinctBy {
+            val allKnownModels = (this.state.upstreamModels + this.state.builtModels).distinctBy {
                 "${it.packageName}:${it.isVersionOf}:${it.name}"
             }
-            val dependencies = Dependencies(true, *sourceSymbols.mapNotNull { it.containingFile }.toTypedArray())
+            val dependencies = Dependencies(true, *state.sourceSymbols.mapNotNull { it.containingFile }.toTypedArray())
             KReplicaCodegen.execute(
-                primaryModels = this.builtModels,
+                primaryModels = this.state.builtModels,
                 allModels = allKnownModels,
                 codeGenerator = env.codeGenerator,
                 dependencies = dependencies
@@ -128,7 +118,7 @@ internal class ModelProcessor(private val env: SymbolProcessorEnvironment) : Sym
             exitProcess(1)
         }
 
-        writeModelsToFile(this.builtModels, this.sourceSymbols.toList())
+        writeModelsToFile(this.state.builtModels, this.state.sourceSymbols.toList())
     }
 
     private fun writeModelsToFile(models: List<Model>, sourceSymbols: List<KSClassDeclaration>) {
@@ -139,5 +129,17 @@ internal class ModelProcessor(private val env: SymbolProcessorEnvironment) : Sym
         val file = env.codeGenerator.createNewFile(dependencies, "", fileName, "")
         env.logger.info("--- KREPLICA-KSP: Writing ${models.size} models to models.json for downstream consumers. ---")
         OutputStreamWriter(file, "UTF-8").use { it.write(jsonText) }
+    }
+
+    private class ProcessingState {
+        val builtModels = mutableListOf<Model>()
+        val sourceSymbols = mutableSetOf<KSClassDeclaration>()
+        var round = ProcessingRound.FIRST
+        val upstreamModels = mutableListOf<Model>()
+        var initialized = false
+
+        enum class ProcessingRound {
+            FIRST, SECOND
+        }
     }
 }
