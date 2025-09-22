@@ -8,14 +8,16 @@ import org.gradle.api.Project
 import org.gradle.api.file.RegularFile
 import org.gradle.api.provider.Provider
 import org.jetbrains.kotlin.gradle.dsl.KotlinMultiplatformExtension
+import org.jetbrains.kotlin.gradle.plugin.KotlinCompilation
 import java.io.File
 
 fun applyKmpConvention(project: Project, projectVersion: String) {
     project.logger.info("--- KREPLICA-PLUGIN: Applying KMP Convention to ${project.path} ---")
     val kmpExt = project.extensions.findByType(KotlinMultiplatformExtension::class.java) ?: return
 
-    val kotlinPoetOutputDir = project.layout.buildDirectory.dir(KReplicaPaths.KOTLIN_POET_GENERATED_DIR)
-    kmpExt.sourceSets.getByName("commonMain").kotlin.srcDir(kotlinPoetOutputDir)
+    kmpExt.sourceSets.named("commonMain").configure {
+        kotlin.srcDir(project.layout.buildDirectory.dir("generated/ksp/metadata/commonMain/kotlin"))
+    }
 
     kmpExt.sourceSets.getByName("commonMain").dependencies {
         project.logger.info("--- KREPLICA-PLUGIN: Adding KReplica dependencies for KMP commonMain in ${project.path} ---")
@@ -51,5 +53,13 @@ fun applyKmpConvention(project: Project, projectVersion: String) {
     }
     project.extensions.configure(KspExtension::class.java) {
         arg("kreplica.metadataFiles", metadataFilesProvider)
+    }
+
+    kmpExt.targets.configureEach {
+        compilations.configureEach {
+            if (name == KotlinCompilation.MAIN_COMPILATION_NAME) {
+                compileTaskProvider.get().dependsOn("kspCommonMainKotlinMetadata")
+            }
+        }
     }
 }

@@ -13,12 +13,19 @@ class KReplicaPlugin : Plugin<Project> {
 
         val projectVersion = "6.0.0"
 
-        target.configurations.create("kreplicaMetadata") {
+        val kreplicaMetadata = target.configurations.create("kreplicaMetadata") {
             isCanBeResolved = true
             isCanBeConsumed = false
             description = "Resolves models.json files from all project dependencies."
             attributes {
                 attribute(KREPLICA_MODEL_TYPE_ATTRIBUTE, MODELS_JSON_TYPE)
+            }
+        }
+
+        target.configurations.all {
+            val n = name.lowercase()
+            if (n.endsWith("implementation") || n.endsWith("api")) {
+                kreplicaMetadata.extendsFrom(this)
             }
         }
 

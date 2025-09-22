@@ -7,14 +7,16 @@ import io.availe.models.KReplicaPaths
 import org.gradle.api.Project
 import org.gradle.api.file.RegularFile
 import org.gradle.api.provider.Provider
+import org.gradle.kotlin.dsl.withType
 import org.jetbrains.kotlin.gradle.dsl.KotlinProjectExtension
+import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 import java.io.File
 
 fun applyJvmConvention(project: Project, projectVersion: String) {
-    val kotlinPoetOutputDir = project.layout.buildDirectory.dir(KReplicaPaths.KOTLIN_POET_GENERATED_DIR)
-    project.extensions.getByType(KotlinProjectExtension::class.java).sourceSets.getByName("main").kotlin.srcDir(
-        kotlinPoetOutputDir
-    )
+    val kotlinExtension = project.extensions.getByType(KotlinProjectExtension::class.java)
+    kotlinExtension.sourceSets.named("main").configure {
+        kotlin.srcDir(project.layout.buildDirectory.dir("generated/ksp/main/kotlin"))
+    }
 
     project.dependencies.apply {
         add("implementation", "io.availe:model-ksp-annotations:$projectVersion")
@@ -46,5 +48,9 @@ fun applyJvmConvention(project: Project, projectVersion: String) {
     }
     project.extensions.configure(KspExtension::class.java) {
         arg("kreplica.metadataFiles", metadataFilesProvider)
+    }
+
+    project.tasks.withType<KotlinCompile> {
+        dependsOn("kspKotlin")
     }
 }
