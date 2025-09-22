@@ -96,11 +96,6 @@ internal fun processProperty(
     )
     val isGeneratedForeignModel = foreignDecl.isGeneratedVariantContainer()
 
-    environment.logger.info(
-        "processProperty name=${propertyDeclaration.simpleName.asString()} " +
-                "qualified=${typeInfo.qualifiedName} isValueClass=${typeInfo.isValueClass} foreign=$isGeneratedForeignModel"
-    )
-
     return if (isGeneratedForeignModel && foreignDecl != null) {
         createForeignProperty(
             propertyDeclaration,

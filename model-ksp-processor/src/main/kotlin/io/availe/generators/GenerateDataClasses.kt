@@ -52,7 +52,6 @@ private fun generateSchemaFile(
 ) {
     val representativeModel = versions.first()
     val schemaFileName = (representativeModel.isVersionOf ?: representativeModel.name) + SCHEMA_SUFFIX
-    logger.info("Generating schema file: $schemaFileName in package ${representativeModel.packageName}")
 
     val fileSpec = FileSpec.builder(representativeModel.packageName, schemaFileName).apply {
         addFileComment(FILE_HEADER_COMMENT)

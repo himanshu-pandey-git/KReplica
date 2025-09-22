@@ -12,7 +12,6 @@ import org.jetbrains.kotlin.gradle.plugin.KotlinCompilation
 import java.io.File
 
 fun applyKmpConvention(project: Project, projectVersion: String) {
-    project.logger.info("--- KREPLICA-PLUGIN: Applying KMP Convention to ${project.path} ---")
     val kmpExt = project.extensions.findByType(KotlinMultiplatformExtension::class.java) ?: return
 
     kmpExt.sourceSets.named("commonMain").configure {
@@ -20,7 +19,6 @@ fun applyKmpConvention(project: Project, projectVersion: String) {
     }
 
     kmpExt.sourceSets.getByName("commonMain").dependencies {
-        project.logger.info("--- KREPLICA-PLUGIN: Adding KReplica dependencies for KMP commonMain in ${project.path} ---")
         implementation("io.availe:model-ksp-annotations:$projectVersion")
     }
 

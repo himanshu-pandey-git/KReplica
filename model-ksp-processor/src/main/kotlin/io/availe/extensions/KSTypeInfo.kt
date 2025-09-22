@@ -25,7 +25,6 @@ internal data class KSTypeInfo(
         fun from(ksType: KSType, environment: SymbolProcessorEnvironment, resolver: Resolver): KSTypeInfo {
             if (ksType.isError) {
                 val typeName = ksType.declaration.simpleName.asString()
-                environment.logger.info("KReplica KSP: Deferring symbol because type '$typeName' is not yet resolved.")
                 throw ResolutionException()
             }
 
@@ -46,7 +45,6 @@ internal data class KSTypeInfo(
             }
             val isValue = isValueByModifier || isValueByAnnotation
 
-            environment.logger.info("KSTypeInfo.from qualifiedName=$qualified isEnum=$isEnum isValueClass=$isValue isDataClass=$isData")
             return KSTypeInfo(qualified, args, nullable, isEnum, isValue, isData, needsContextual)
         }
     }

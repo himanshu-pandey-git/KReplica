@@ -9,8 +9,6 @@ import org.gradle.api.Project
 
 class KReplicaPlugin : Plugin<Project> {
     override fun apply(target: Project) {
-        target.logger.info("--- KREPLICA-PLUGIN: Applying 'io.availe.kreplica' to project ${target.path} ---")
-
         val projectVersion = "6.0.0"
 
         val kreplicaMetadata = target.configurations.create("kreplicaMetadata") {
@@ -30,7 +28,6 @@ class KReplicaPlugin : Plugin<Project> {
         }
 
         target.plugins.withId("com.google.devtools.ksp") {
-            target.logger.info("--- KREPLICA-PLUGIN: KSP plugin found in ${target.path}. Configuring conventions. ---")
             when {
                 target.plugins.hasPlugin("org.jetbrains.kotlin.multiplatform") -> {
                     applyKmpConvention(target, projectVersion)

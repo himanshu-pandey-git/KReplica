@@ -125,7 +125,6 @@ internal class ModelProcessor(private val env: SymbolProcessorEnvironment) : Sym
         val dependencies = Dependencies(true, *sourceFiles)
         val fileName = KReplicaPaths.MODELS_JSON_FILE
         val file = env.codeGenerator.createNewFile(dependencies, "", fileName, "")
-        env.logger.info("--- KREPLICA-KSP: Writing ${models.size} models to models.json for downstream consumers. ---")
         OutputStreamWriter(file, "UTF-8").use { it.write(jsonText) }
     }
 
