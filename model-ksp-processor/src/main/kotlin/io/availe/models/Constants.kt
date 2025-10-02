@@ -31,11 +31,5 @@ internal val INTRINSIC_SERIALIZABLES: Set<String> = setOf(
 )
 
 object KReplicaPaths {
-    const val KSP_GENERATED_DIR = "generated/ksp"
-    const val KOTLIN_POET_GENERATED_DIR = "generated-src/kotlin-poet"
-    const val KSP_METADATA_DIR = "metadata/commonMain"
-    const val KSP_JVM_DIR = "main"
-    const val KOTLIN_DIR = "kotlin"
-    const val RESOURCES_DIR = "kreplica-meta"
     const val MODELS_JSON_FILE = "models.json"
 }
